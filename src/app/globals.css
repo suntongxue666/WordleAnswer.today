@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Apple-inspired color palette */
+    --background: 0 0% 100%;
+    --foreground: 230 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 230 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 230 10% 3.9%;
+    /* Apple Blue as primary */
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 98%;
+    /* Apple Gray as secondary */
+    --secondary: 215 16% 47%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 215 25% 96%;
+    --muted-foreground: 215 10% 46%;
+    --accent: 204 94% 93%;
+    --accent-foreground: 210 100% 50%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 215 20% 90%;
+    --input: 215 20% 90%;
+    --ring: 210 100% 50%;
+    --radius: 0.75rem;
+    /* Wordle-specific colors */
+    --wordle-green: 120 60% 50%;
+    --wordle-yellow: 45 100% 51%;
+    --wordle-gray: 215 10% 83%;
+  }
+
+  .dark {
+    --background: 230 15% 3%;
+    --foreground: 0 0% 98%;
+    --card: 230 15% 6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 230 15% 6%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 210 100% 60%;
+    --primary-foreground: 230 15% 3%;
+    --secondary: 215 15% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 215 15% 15%;
+    --muted-foreground: 215 5% 64%;
+    --accent: 215 15% 15%;
+    --accent-foreground: 210 100% 60%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 215 15% 15%;
+    --input: 215 15% 15%;
+    --ring: 210 100% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  h1 {
+    @apply text-3xl md:text-4xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl font-semibold;
+  }
+}
+
+@layer components {
+  .wordle-letter {
+    @apply w-12 h-12 md:w-14 md:h-14 border-2 rounded-md font-bold text-lg md:text-xl
+           flex items-center justify-center transition-all duration-300;
+  }
+
+  .wordle-letter-correct {
+    @apply bg-green-500 border-green-500 text-white;
+  }
+
+  .wordle-letter-present {
+    @apply bg-yellow-400 border-yellow-400 text-white;
+  }
+
+  .wordle-letter-absent {
+    @apply bg-gray-400 border-gray-400 text-white;
+  }
+
+  .wordle-letter-empty {
+    @apply bg-white border-gray-300 text-black;
+  }
+
+  .glass-effect {
+    @apply backdrop-blur-xl bg-white/70 border border-white/20 shadow-xl;
+  }
+
+  .apple-button {
+    @apply bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg
+           font-medium transition-all duration-200 shadow-lg hover:shadow-xl
+           active:scale-95;
+  }
+}
