@@ -1,3 +1,6 @@
+1234
+import { supabase } from '@/lib/supabase'; // 导入 Supabase 客户端
+
 export interface WordleAnswer {
   date: string;
   puzzleNumber: number;
@@ -15,6 +18,15 @@ export interface NYTGame {
   category: 'Word Games' | 'Number Games' | 'Logic Games';
 }
 
+export type WordleData = {
+  date: string;
+  puzzle_number: number;
+  answer: string;
+  hints: { type: string; value: string }[];
+  difficulty?: string;
+  definition?: string;
+};
+
 // Data fetching functions
 export async function fetchWordleData(date: string, puzzleNumber: number): Promise<WordleAnswer | null> {
   try {
@@ -31,93 +43,69 @@ export async function fetchWordleData(date: string, puzzleNumber: number): Promi
   }
 }
 
-// Hardcode today's target based on user's request (July 4, 2025, Puzzle #1476)
-// In a real application, you'd likely have a more robust way to find today's puzzle number dynamically.
-export const getTodaysWordle = async (): Promise<WordleAnswer | null> => {
-  // As per user's request, target July 4, 2025, Puzzle #1476
-  const targetDate = '2025-07-04';
-  const targetPuzzleNumber = 1476; 
-  
-  const data = await fetchWordleData(targetDate, targetPuzzleNumber);
-  
-  if (data) {
-    console.log("Successfully fetched today's Wordle:", data);
-  } else {
-    console.warn("Failed to fetch today's Wordle data.");
+// 获取今天的 Wordle 数据
+export async function getTodaysWordle(): Promise<WordleData | null> {
+  // const today = new Date().toISOString().split('T')[0]; // 原来的代码：查询今天的日期
+
+  // --- 临时修改：查询固定日期的数据，用于测试 ---
+  const testDate = '2025-07-06'; // 修改为你的爬虫刚刚插入的日期
+  // --- 临时修改结束 ---
+
+  // 从 Supabase 查询数据
+  const { data, error } = await supabase
+    .from('wordle-answers') // 你的表名
+    .select('*')
+    // .eq('date', today) // 原来的查询条件
+    .eq('date', testDate) // 修改为查询固定日期的数据
+    .single(); // 期望只返回一条记录
+
+  if (error) {
+    console.error('Error fetching today\'s Wordle:', error);
+    return null;
   }
-  return data;
-};
 
-// For recent answers, we will provide a small set of known historical puzzles
-// To fetch more historical data, you would need to know their puzzle numbers
-// or implement a more complex scraping strategy that explores archive links.
-export const getRecentWordleAnswers = async (): Promise<WordleAnswer[]> => {
-    const historicalPuzzles: { date: string; puzzleNumber: number }[] = [
-        { date: '2025-01-03', puzzleNumber: 1494 }, // This seems to be an old mock from current date, re-evaluate based on techwiser.com
-        { date: '2025-01-02', puzzleNumber: 1493 },
-        { date: '2025-01-01', puzzleNumber: 1492 },
-        // ... add more if you know their puzzle numbers and want to fetch them
-    ];
+  if (!data) {
+    return null; // 没有找到今天的 Wordle 数据
+  }
 
-    // For now, we'll keep a few fixed ones. Fetching all history would require more advanced scraping.
-    // Given the techwiser.com URL structure, finding historical puzzle numbers by date is non-trivial.
-    // For demonstration, let's just use the current known good July 4 data as the first "recent" item
-    // and then some of the original mock data for structure.
-    
-    const recentData: WordleAnswer[] = [];
-    const todayData = await getTodaysWordle(); // Fetch today's first
-    if (todayData) {
-        recentData.push(todayData);
-    }
+  // 转换数据格式以匹配 WordleData 类型
+  return {
+    date: data.date,
+    puzzle_number: data.puzzle_number,
+    answer: data.answer,
+    hints: Array.isArray(data.hints) ? data.hints : [],
+    difficulty: data.difficulty,
+    definition: data.definition,
+  };
+}
 
-    // Keeping some mock-like data for recent answers for now as full historical scraping is complex.
-    // In a real app, you'd store this in Supabase and fetch from there.
-    recentData.push(      {
-        date: '2025-01-03', // Note: Puzzle numbers are inconsistent if these are relative to 1476.
-        puzzleNumber: 1494, // This mock data's puzzle numbers are relative to 2025-01-04
-        answer: 'CRANE',
-        hints: ['Large bird', 'Construction equipment', 'Starts with C', 'Five letters', 'Used for lifting heavy objects'],
-        difficulty: 'Easy',
-        definition: 'A large, tall machine used for moving heavy objects by suspending them from a projecting arm or beam.'
-      },
-      {
-        date: '2025-01-02',
-        puzzleNumber: 1493,
-        answer: 'LIGHT',
-        hints: ['Opposite of dark', 'Electromagnetic radiation', 'Not heavy', 'Common English word', 'Essential for vision'],
-        difficulty: 'Easy',
-        definition: 'The natural agent that stimulates sight and makes things visible.'
-      },
-      {
-        date: '2025-01-01',
-        puzzleNumber: 1492,
-        answer: 'DREAM',
-        hints: ['Happens during sleep', 'Can be vivid or vague', 'Often forgotten', 'REM sleep phenomenon', 'Aspirations and goals'],
-        difficulty: 'Medium',
-        definition: 'A series of thoughts, images, and sensations occurring in a person\'s mind during sleep.'
-      },
-      {
-        date: '2024-12-31',
-        puzzleNumber: 1491,
-        answer: 'PARTY',
-        hints: ['Social gathering', 'Celebration event', 'New Year tradition', 'Fun with friends', 'Music and dancing'],
-        difficulty: 'Easy',
-        definition: 'A social gathering of invited guests, typically involving eating, drinking, and entertainment.'
-      },
-      {
-        date: '2024-12-30',
-        puzzleNumber: 1490,
-        answer: 'QUIET',
-        hints: ['Opposite of loud', 'Peaceful state', 'Library atmosphere', 'Soft volume', 'Calm and still'],
-        difficulty: 'Medium',
-        definition: 'Making little or no noise; free from disturbance or tumult; tranquil.'
-      });
+// 获取最近的 Wordle 答案（根据需求可以按日期排序或限制数量）
+export async function getRecentWordleAnswers(limit: number = 10): Promise<WordleData[]> {
+  const { data, error } = await supabase
+    .from('wordle-answers')
+    .select('*')
+    .order('date', { ascending: false }) // 按日期降序排序
+    .limit(limit); // 限制返回数量
 
-    // Remove duplicates if any (e.g. today's answer might be present in mock)
-    const uniqueRecentData = Array.from(new Map(recentData.map(item => [item['puzzleNumber'], item])).values());
+  if (error) {
+    console.error('Error fetching recent Wordle answers:', error);
+    return [];
+  }
 
-    return uniqueRecentData.slice(0,6); // Return top 6 recent answers
-};
+  if (!data) {
+    return [];
+  }
+
+  // 转换数据格式
+  return data.map((item: any) => ({
+    date: item.date,
+    puzzle_number: item.puzzle_number,
+    answer: item.answer,
+    hints: Array.isArray(item.hints) ? item.hints : [],
+    difficulty: item.difficulty,
+    definition: item.definition,
+  }));
+}
 
 export const nytGames: NYTGame[] = [
   {

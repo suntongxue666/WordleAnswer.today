@@ -36,6 +36,7 @@ import {
   getWordleUrl,
   type WordleAnswer // Import the type for better type safety
 } from '@/lib/wordle-data'; // Assuming wordle-data.ts exists and has this structure
+import { ClientBody } from '@/app/ClientBody'; // Fix: Change to default import
 
 // Helper component to render Wordle letters with gray background
 const RenderWordleLetters = ({ word }: { word: string }) => {
@@ -71,252 +72,146 @@ const RenderRevealedWordleLetters = ({ word }: { word: string }) => {
   );
 };
 
-
-export default function HomePage() {
-  const [todayWordle, setTodayWordle] = useState<WordleAnswer | null>(null);
-  const [recentAnswers, setRecentAnswers] = useState<WordleAnswer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showAnswer, setShowAnswer] = useState(false);
-
-  useEffect(() => {
-    async function loadWordleData() {
-      try {
-        setLoading(true);
-        const [todayData, recentData] = await Promise.all([
-          getTodaysWordle(),
-          getRecentWordleAnswers()
-        ]);
-        setTodayWordle(todayData);
-        setRecentAnswers(recentData);
-      } catch (err: any) {
-        console.error("Failed to load Wordle data:", err);
-        setError("Failed to load Wordle data. Please check your network or try again later.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadWordleData();
-  }, []); // Empty dependency array means this runs once on mount
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-xl text-gray-700">
-        Loading Wordle data...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-xl text-red-600">
-        Error: {error}
-      </div>
-    );
-  }
-
-  // Fallback if todayWordle is null after loading (e.g. scrape failed entirely)
-  if (!todayWordle) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-xl text-red-600">
-        Could not load today's Wordle. Data unavailable.
-      </div>
-    );
-  }
-
+export default async function Home() {
+  const wordleData = await getTodaysWordle();
+  const recentAnswers = await getRecentWordleAnswers(6); // Fetch recent answers here
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex flex-col">
-      {/* Header */}
-      <header className="glass-effect sticky top-0 z-50 border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl md:text-3xl font-bold text-blue-600">
-              WordleAnswer.<span className="text-gray-800">Today</span>
-            </h1>
-            <Badge variant="outline" className="text-sm px-3 py-1">
-              Puzzle #{todayWordle.puzzleNumber}
-            </Badge>
+    <main className="flex flex-col items-center justify-between p-4 md:p-8">
+      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
+        {/* ... 其他头部内容，例如 Logo, NavLinks ... */}
+      </div>
+
+      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 lg:static lg:size-auto lg:bg-none">
+        {/* ... Logo 或其他核心居中元素 ... */}
+      </div>
+
+      {/* 条件性显示今日Wordle内容 */}
+      <div className="mb-8 w-full max-w-5xl"> {/* Use mb-8 to provide space from next section */}
+        {wordleData ? (
+          <ClientBody initialWordleData={wordleData} />
+        ) : (
+          <div className="col-span-full flex flex-col items-center justify-center p-4">
+            <h2 className="text-xl font-bold text-gray-700 dark:text-gray-300">
+              哎呀，今天的 Wordle 数据暂时无法获取。
+            </h2>
+            <p className="mt-2 text-gray-500 dark:text-gray-400">
+              请稍后再试，或者查看历史记录。
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">Your daily Wordle companion</p>
-        </div>
-      </header>
+        )}
+      </div>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 flex-1">
-        <div className="max-w-4xl mx-auto space-y-12">
-
-          {/* Today's Wordle Answer Section */}
-          <Card className="glass-effect p-6 shadow-lg">
-            <CardHeader className="text-center pb-4">
-              <CardTitle className="text-3xl md:text-4xl font-bold text-gray-900">
-                Today&apos;s Wordle Answer
-              </CardTitle>
-              <CardDescription className="text-sm md:text-base text-muted-foreground">
-                {formatDate(todayWordle.date)} - Puzzle #{todayWordle.puzzleNumber}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Hints & Answer */}
-              <div className="grid md:grid-cols-2 gap-8 items-start">
-                {/* Hints */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-blue-600">
-                    <Lightbulb className="h-5 w-5" />
-                    <h2 className="text-xl font-semibold">Hints & Answer</h2>
-                    <Badge className={getDifficultyColor(todayWordle.difficulty)} variant="outline">
-                        {todayWordle.difficulty}
-                    </Badge>
-                  </div>
-                  <h3 className="text-lg font-medium">Helpful Hints:</h3>
-                  <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                    {todayWordle.hints.map((hint, index) => (
-                      <li key={index}>{hint}</li>
-                    ))}
-                  </ol>
+      {/* 最近答案部分 (始终显示) */}
+      <Separator className="my-12 w-full max-w-5xl" /> {/* Adjust width as needed */}
+      <div className="w-full max-w-5xl text-center lg:text-left mb-32"> {/* Original mb-32 grid container */}
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-200">
+          最近的 Wordle 答案
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {recentAnswers.slice(0, 6).map((answer: WordleAnswer) => (
+            <Card key={answer.puzzle_number} className="hover:shadow-lg transition-all duration-200">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">
+                    Puzzle #{answer.puzzle_number}
+                  </CardTitle>
+                  <Badge className={getDifficultyColor(answer.difficulty)} variant="outline">
+                    {answer.difficulty}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {formatDate(answer.date)}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Wordle Letters */}
+                <div className="flex gap-1 justify-center">
+                  {answer.answer.split('').map((letter, index) => (
+                    <div key={`${answer.answer}-${index}`} className="w-8 h-8 md:w-10 md:h-10 border-2 rounded-md font-bold text-sm md:text-base
+                             flex items-center justify-center bg-green-500 border-green-500 text-white">
+                      {letter.toUpperCase()}
+                    </div>
+                  ))}
                 </div>
 
                 {/* Answer */}
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold">Today&apos;s Answer:</h2>
-                  <div className="flex flex-col items-center gap-4">
-                    {showAnswer ? (
-                      <RenderRevealedWordleLetters word={todayWordle.answer} />
-                    ) : (
-                      <RenderWordleLetters word={todayWordle.answer} />
-                    )}
-                    <Button
-                      onClick={() => setShowAnswer(!showAnswer)}
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      <Eye className="h-4 w-4" />
-                      {showAnswer ? 'Hide Answer' : 'Reveal Answer'}
-                    </Button>
-                  </div>
-                  <p className="text-sm text-center text-muted-foreground mt-2">
-                    {todayWordle.definition}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                <p className="text-center font-bold text-lg text-gray-900">
+                  {answer.answer.toUpperCase()}
+                </p>
 
-          {/* Recent Wordle Answers Section */}
-          <div className="space-y-6">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center flex items-center justify-center gap-2">
-              <Calendar className="h-6 w-6 text-blue-500" />
-              Recent Wordle Answers
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recentAnswers.slice(0, 6).map((answer: WordleAnswer) => (
-                <Card key={answer.puzzleNumber} className="hover:shadow-lg transition-all duration-200">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        Puzzle #{answer.puzzleNumber}
-                      </CardTitle>
-                      <Badge className={getDifficultyColor(answer.difficulty)} variant="outline">
-                        {answer.difficulty}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(answer.date)}
-                    </p>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Wordle Letters */}
-                    <div className="flex gap-1 justify-center">
-                      {answer.answer.split('').map((letter, index) => (
-                        <div key={`${answer.answer}-${index}`} className="w-8 h-8 md:w-10 md:h-10 border-2 rounded-md font-bold text-sm md:text-base
-                                 flex items-center justify-center bg-green-500 border-green-500 text-white">
-                          {letter.toUpperCase()}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Answer */}
-                    <p className="text-center font-bold text-lg text-gray-900">
-                      {answer.answer.toUpperCase()}
-                    </p>
-
-                    {/* View Details Button */}
-                    <Link
-                      href={getWordleUrl(answer.date)} // Link to individual wordle page
-                      className="block mt-4"
-                    >
-                      <Button variant="outline" size="sm" className="w-full gap-2 hover:bg-blue-50">
-                        <ExternalLink className="h-4 w-4" />
-                        View Details
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            <div className="text-center mt-8">
-              <Link href="/archive">
-                <Button className="apple-button gap-2">
-                  <Calendar className="h-4 w-4" />
-                  View Complete Archive
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          <Separator className="my-12" />
-
-          {/* Game Rules & Color Meanings Section */}
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Game Rules */}
-            <Card className="glass-effect">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Info className="h-5 w-5 text-blue-500" />
-                  How to Play Wordle
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <h3 className="font-semibold text-lg mb-2">Basic Rules:</h3>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  <li>Guess the Wordle in 6 tries</li>
-                  <li>Each guess must be a valid 5-letter word</li>
-                  <li>Hit Enter to submit your guess</li>
-                  <li>Letters will change color to give you clues</li>
-                </ul>
+                {/* View Details Button */}
+                <Link
+                  href={getWordleUrl(answer.date)} // Link to individual wordle page
+                  className="block mt-4"
+                >
+                  <Button variant="outline" size="sm" className="w-full gap-2 hover:bg-blue-50">
+                    <ExternalLink className="h-4 w-4" />
+                    View Details
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
-
-            {/* Color Meanings */}
-            <Card className="glass-effect">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-blue-500" />
-                  Color Meanings:
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center bg-green-500 text-white font-bold rounded-md">W</div>
-                  <p className="text-muted-foreground">Letter is correct and in the right position</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center bg-yellow-500 text-white font-bold rounded-md">O</div>
-                  <p className="text-muted-foreground">Letter is in the word but wrong position</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center bg-gray-400 text-white font-bold rounded-md">R</div>
-                  <p className="text-muted-foreground">Letter is not in the word</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          ))}
         </div>
-      </main>
+        <div className="text-center mt-8">
+          <Link href="/archive">
+            <Button className="apple-button gap-2">
+              <Calendar className="h-4 w-4" />
+              View Complete Archive
+            </Button>
+          </Link>
+        </div>
+      </div>
 
-      {/* Footer */}
-      <footer className="bg-white/50 backdrop-blur-sm mt-12 py-8 border-t text-center text-sm text-muted-foreground">
+      {/* Game Rules & Color Meanings Section (始终显示) */}
+      <div className="grid md:grid-cols-2 gap-8 w-full max-w-5xl"> {/* Adjust width as needed */}
+        {/* Game Rules */}
+        <Card className="glass-effect">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-blue-500" />
+              How to Play Wordle
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <h3 className="font-semibold text-lg mb-2">Basic Rules:</h3>
+            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+              <li>Guess the Wordle in 6 tries</li>
+              <li>Each guess must be a valid 5-letter word</li>
+              <li>Hit Enter to submit your guess</li>
+              <li>Letters will change color to give you clues</li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        {/* Color Meanings */}
+        <Card className="glass-effect">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-blue-500" />
+              Color Meanings:
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center bg-green-500 text-white font-bold rounded-md">W</div>
+              <p className="text-muted-foreground">Letter is correct and in the right position</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center bg-yellow-500 text-white font-bold rounded-md">O</div>
+              <p className="text-muted-foreground">Letter is in the word but wrong position</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center bg-gray-400 text-white font-bold rounded-md">R</div>
+              <p className="text-muted-foreground">Letter is not in the word</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Footer (移动到main标签内，确保单根元素) */}
+      <footer className="bg-white/50 backdrop-blur-sm mt-12 py-8 border-t text-center text-sm text-muted-foreground w-full">
         <div className="container mx-auto px-4 space-y-2">
           <p>
             Your trusted source for daily Wordle answers, hints, and strategies. We&apos;re not affiliated with The New York Times or Wordle, but we&apos;re passionate about helping players succeed!
@@ -329,7 +224,7 @@ export default function HomePage() {
           <p>© 2025 WordleAnswer.Today. All rights reserved.</p>
         </div>
       </footer>
-    </div>
+    </main>
   );
 }
 

@@ -1,10 +1,21 @@
 import { PlaywrightCrawler, ProxyConfiguration } from 'crawlee';
+import * as cheerio from 'cheerio';
+import { supabase } from './src/lib/supabase'; // 引入 Supabase 客户端
 
 // Helper function to format date (simplified for this test)
 const formatUrlDateForWordleHintTop = (date: Date): string => {
   const options: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: '2-digit', year: 'numeric' };
   const formatted = date.toLocaleDateString('en-US', options); 
   return formatted.replace(/, /g, '-').replace(/ /g, '-').replace(/\.$/, ''); 
+};
+
+type WordleData = {
+    date: string;
+    puzzle_number: number | null;
+    answer: string;
+    hints: { type: string; value: string }[];
+    difficulty?: string | null;
+    definition?: string | null;
 };
 
 async function runScraper() {
@@ -20,14 +31,7 @@ async function runScraper() {
   console.log(`Starting Crawlee test for URL: ${url}`);
   console.log(`Using proxy: ${proxyUrl}`);
 
-  let wordleData: Partial<WordleAnswer> = {
-      puzzleNumber: 0, // Will be updated
-      date: targetDate.toISOString().split('T')[0], // Use ISO string for consistency
-      answer: '',
-      hints: [],
-      difficulty: 'Medium', // Default or scrape if possible
-      definition: '' // Default or scrape if possible
-  };
+  let wordleData: WordleData | null = null;
 
   const crawler = new PlaywrightCrawler({
     proxyConfiguration,
@@ -38,75 +42,114 @@ async function runScraper() {
       console.log(`Visited: ${request.url}`);
       
       const htmlContent = await page.content();
+      const $ = cheerio.load(htmlContent);
       console.log("Fetched HTML snippet (first 2000 chars from Playwright):", htmlContent.slice(0, 2000)); 
 
-      let extractedAnswer: string = '';
-      let extractedHints: string[] = [];
-      let parsedHintsVarName: string = ''; // 追踪是 TodayHints 还是 YesterdayHints
+      let extractedDate: string | undefined;
+      let extractedPuzzleNumber: number | undefined;
+      let extractedAnswer: string | undefined;
+      let extractedHints: { type: string; value: string }[] = [];
+      let extractedDifficulty: string | undefined;
+      let extractedDefinition: string | undefined;
 
-      const scriptContents = await page.evaluate(() => {
-          const scripts = Array.from(document.querySelectorAll('script'));
-          return scripts.map(script => script.textContent);
-      });
+      // 获取今天的日期（YYYY-MM-DD 格式），作为默认值
+      extractedDate = new Date().toISOString().split('T')[0];
 
-      for (const scriptText of scriptContents) {
-          if (scriptText) {
-              // 优先尝试匹配 TodayHints
-              let match = scriptText.match(/const TodayHints = ({.*?});/s);
-              if (match && match[1]) {
-                  try {
-                      const hintsObj = JSON.parse(match[1]);
-                      if (hintsObj.answer) extractedAnswer = hintsObj.answer;
-                      if (hintsObj.hints) extractedHints = hintsObj.hints;
-                      parsedHintsVarName = 'TodayHints';
-                      console.log("Successfully parsed TodayHints variable.");
-                      break; // 找到并解析成功，跳出循环
-                  } catch (e) {
-                      console.error("Error parsing TodayHints JSON from script:", e);
+      // 尝试从 TodayHints 变量中提取数据
+      const todayHintsScript = $('script:contains("const TodayHints")').html();
+      if (todayHintsScript) {
+          const todayHintsMatch = todayHintsScript.match(/const TodayHints\s*=\s*({[^;]+});/);
+          if (todayHintsMatch && todayHintsMatch[1]) {
+              try {
+                  const hintsJson = JSON.parse(todayHintsMatch[1]);
+                  extractedPuzzleNumber = hintsJson.puzzleNumber;
+                  extractedAnswer = hintsJson.answer;
+                  extractedDifficulty = hintsJson.difficulty;
+                  extractedDefinition = hintsJson.definition;
+
+                  if (hintsJson && Array.isArray(hintsJson.hints)) {
+                      extractedHints = hintsJson.hints.map((hintText: string, index: number) => ({
+                          type: `hint${index + 1}`,
+                          value: hintText,
+                      }));
+                  } else {
+                      extractedHints = [];
                   }
-              }
-
-              // 如果 TodayHints 未找到或解析失败，尝试匹配 YesterdayHints
-              if (!extractedAnswer && !extractedHints.length) { // 仅在 TodayHints 没有找到时尝试 YesterdayHints
-                 match = scriptText.match(/const YesterdayHints = ({.*?});/s);
-                 if (match && match[1]) {
-                    try {
-                        const hintsObj = JSON.parse(match[1]);
-                        if (hintsObj.answer) extractedAnswer = hintsObj.answer;
-                        if (hintsObj.hints) extractedHints = hintsObj.hints;
-                        parsedHintsVarName = 'YesterdayHints';
-                        console.log("Successfully parsed YesterdayHints variable.");
-                        break; // 找到并解析成功，跳出循环
-                    } catch (e) {
-                        console.error("Error parsing YesterdayHints JSON from script:", e);
-                    }
-                 }
+              } catch (e) {
+                  console.error('Failed to parse TodayHints JSON:', e);
               }
           }
       }
 
-      if (!parsedHintsVarName) {
-          console.warn("Could not find 'const TodayHints =' or 'const YesterdayHints =' variable in any script.");
-      } else {
-          console.log(`Data found in variable: ${parsedHintsVarName}`);
+      // 如果 TodayHints 没有，尝试从 YesterdayHints 变量中提取数据 (并调整日期)
+      if (!extractedAnswer) {
+          const yesterdayHintsScript = $('script:contains("const YesterdayHints")').html();
+          if (yesterdayHintsScript) {
+              const yesterdayHintsMatch = yesterdayHintsScript.match(/const YesterdayHints\s*=\s*({[^;]+});/);
+              if (yesterdayHintsMatch && yesterdayHintsMatch[1]) {
+                  try {
+                      const hintsJson = JSON.parse(yesterdayHintsMatch[1]);
+                      const yesterday = new Date();
+                      yesterday.setDate(yesterday.getDate() - 1);
+                      extractedDate = yesterday.toISOString().split('T')[0]; // 获取昨天的日期
+                      extractedPuzzleNumber = hintsJson.puzzleNumber;
+                      extractedAnswer = hintsJson.answer;
+                      extractedDifficulty = hintsJson.difficulty;
+                      extractedDefinition = hintsJson.definition;
+
+                      if (hintsJson && Array.isArray(hintsJson.hints)) {
+                          extractedHints = hintsJson.hints.map((hintText: string, index: number) => ({
+                              type: `hint${index + 1}`,
+                              value: hintText,
+                          }));
+                      } else {
+                          extractedHints = [];
+                      }
+                  } catch (e) {
+                      console.error('Failed to parse YesterdayHints JSON:', e);
+                  }
+              }
+          }
       }
 
-      wordleData.answer = extractedAnswer ? extractedAnswer.toUpperCase() : '';
-      wordleData.hints = extractedHints;
+      if (extractedDate && extractedAnswer) {
+          wordleData = {
+              date: extractedDate,
+              puzzle_number: extractedPuzzleNumber !== undefined ? extractedPuzzleNumber : null,
+              answer: extractedAnswer,
+              hints: extractedHints,
+              difficulty: extractedDifficulty !== undefined ? extractedDifficulty : null,
+              definition: extractedDefinition !== undefined ? extractedDefinition : null,
+          };
+          console.log('Extracted Wordle Data:', wordleData);
 
-      const pageTitle = await page.title();
-      const titlePuzzleMatch = pageTitle.match(/#(\d+)/) || pageTitle.match(/Wordle Hint For.*#(\d+)/); 
-      wordleData.puzzleNumber = titlePuzzleMatch && titlePuzzleMatch[1] ? parseInt(titlePuzzleMatch[1], 10) : (wordleData.puzzleNumber || 0);
+          // --- 添加 Supabase 插入逻辑 ---
+          const { data, error } = await supabase
+              .from('wordle-answers')
+              .upsert(wordleData, { onConflict: 'date,puzzle_number' })
+              .select();
+
+          if (error) {
+              console.error('Error inserting/updating Wordle data to Supabase:', error);
+              console.error('Supabase Error Details:', JSON.stringify(error, null, 2));
+          } else {
+              console.log('Wordle data successfully saved to Supabase:', data);
+          }
+          // --- 结束 Supabase 插入逻辑 ---
+
+      } else {
+          console.warn('Could not extract sufficient Wordle data to save (missing date or answer) for:', request.url);
+      }
     },
     maxRequestsPerCrawl: 1,
   });
 
-  await crawler.run([{ url }]);
+  await crawler.run(['https://www.wordlehint.top/']);
 
   // 这些 console.log 语句会使用 runScraper 作用域中的 wordleData
-  console.log("Extracted Puzzle Number (Final):", wordleData.puzzleNumber);
-  console.log("Extracted Answer (Final):", wordleData.answer);
-  console.log("Extracted Hints (Final):", wordleData.hints);
+  console.log("Extracted Puzzle Number (Final):", wordleData?.puzzle_number);
+  console.log("Extracted Answer (Final):", wordleData?.answer);
+  console.log("Extracted Hints (Final):", wordleData?.hints);
 
   console.log('Crawlee test finished.');
 }
