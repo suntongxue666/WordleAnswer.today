@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
 
 // 直接使用环境变量
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -68,7 +69,7 @@ export default async function TestPage() {
       
       <div>
         <h2>URL Test:</h2>
-        <p><a href="/">Go to main page</a></p>
+        <p><Link href="/">Go to main page</Link></p>
       </div>
     </div>
   );
