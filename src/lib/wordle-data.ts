@@ -1,13 +1,15 @@
-1234
 import { supabase } from '@/lib/supabase'; // 导入 Supabase 客户端
+import { format } from 'date-fns'; // Add this import
 
 export interface WordleAnswer {
-  date: string;
-  puzzleNumber: number;
+  id: string;
+  date: string; // YYYY-MM-DD
+  puzzle_number: number;
   answer: string;
-  hints: string[];
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  definition: string;
+  hints: { type: string; value: string }[];
+  difficulty: string | null; // Allow null for difficulty
+  definition: string | null; // Allow null for definition
+  created_at: string;
 }
 
 export interface NYTGame {
@@ -44,39 +46,25 @@ export async function fetchWordleData(date: string, puzzleNumber: number): Promi
 }
 
 // 获取今天的 Wordle 数据
-export async function getTodaysWordle(): Promise<WordleData | null> {
-  // const today = new Date().toISOString().split('T')[0]; // 原来的代码：查询今天的日期
+export async function getTodaysWordle(testDate?: string): Promise<WordleAnswer | null> {
+  const dateToFetch = testDate || format(new Date(), 'yyyy-MM-dd');
+  console.log(`[getTodaysWordle] Attempting to fetch Wordle for date: ${dateToFetch}`);
 
-  // --- 临时修改：查询固定日期的数据，用于测试 ---
-  const testDate = '2025-07-06'; // 修改为你的爬虫刚刚插入的日期
-  // --- 临时修改结束 ---
-
-  // 从 Supabase 查询数据
   const { data, error } = await supabase
-    .from('wordle-answers') // 你的表名
+    .from('wordle-answers')
     .select('*')
-    // .eq('date', today) // 原来的查询条件
-    .eq('date', testDate) // 修改为查询固定日期的数据
-    .single(); // 期望只返回一条记录
+    .eq('date', dateToFetch)
+    .order('created_at', { ascending: false })
+    .limit(1);
 
   if (error) {
-    console.error('Error fetching today\'s Wordle:', error);
+    console.error(`[getTodaysWordle] Error fetching Wordle for ${dateToFetch}:`, error);
     return null;
   }
 
-  if (!data) {
-    return null; // 没有找到今天的 Wordle 数据
-  }
-
-  // 转换数据格式以匹配 WordleData 类型
-  return {
-    date: data.date,
-    puzzle_number: data.puzzle_number,
-    answer: data.answer,
-    hints: Array.isArray(data.hints) ? data.hints : [],
-    difficulty: data.difficulty,
-    definition: data.definition,
-  };
+  const result = (data && data.length > 0) ? data[0] as WordleAnswer : null;
+  console.log(`[getTodaysWordle] Result for ${dateToFetch}: ${result ? `Found (Puzzle: ${result.puzzle_number}, Answer: ${result.answer})` : 'Not Found'}`);
+  return result;
 }
 
 // 获取最近的 Wordle 答案（根据需求可以按日期排序或限制数量）
@@ -162,6 +150,18 @@ export const formatDate = (dateString: string): string => {
   });
 };
 
+// 计算Wordle期数，基于7月7日为#1479
+export const calculatePuzzleNumber = (dateString: string): number => {
+  const baseDate = new Date('2025-07-07'); // 基准日期：7月7日
+  const basePuzzleNumber = 1479; // 基准期数
+  
+  const targetDate = new Date(dateString);
+  const diffTime = targetDate.getTime() - baseDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  return basePuzzleNumber + diffDays;
+};
+
 export const getWordleUrl = (date: string): string => {
   // This URL will be for the detailed page, not for scraping.
   // The puzzle number might be needed here too if the detail page requires it in its path.
@@ -177,3 +177,29 @@ export const getDifficultyColor = (difficulty: string): string => {
     default: return 'text-gray-600 bg-gray-100';
   }
 };
+
+export async function getRecentWordles(days: number = 30): Promise<WordleAnswer[]> {
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(today.getDate() - days);
+
+  const startDate = format(thirtyDaysAgo, 'yyyy-MM-dd');
+  const endDate = format(today, 'yyyy-MM-dd');
+
+  console.log(`[getRecentWordles] Fetching Wordles from ${startDate} to ${endDate}`);
+
+  const { data, error } = await supabase
+    .from('wordle-answers')
+    .select('*')
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date', { ascending: false });
+
+  if (error) {
+    console.error('[getRecentWordles] Error fetching recent Wordles:', error);
+    return [];
+  }
+  // Log fetched dates to verify
+  console.log(`[getRecentWordles] Fetched ${data.length} recent Wordles. Dates: ${data.map(d => d.date).join(', ')}`);
+  return data as WordleAnswer[];
+}
