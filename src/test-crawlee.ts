@@ -110,7 +110,7 @@ const runScraper = async () => {
             });
 
             if (jsonContent && jsonContent.answer && jsonContent.hints && extractedDateFromUrl) {
-                const hintsArray = jsonContent.hints?.map((hint: any) => ({
+                const hintsArray = jsonContent.hints?.map((hint: { type?: string; value?: string }) => ({
                     type: hint.type || 'clue',
                     value: hint.value,
                 }));

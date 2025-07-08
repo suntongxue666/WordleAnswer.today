@@ -35,8 +35,11 @@ export async function GET(request: Request) {
 
     console.log(`Scraping URL with Crawlee: ${url}`);
 
+    // eslint-disable-next-line prefer-const
+    let parsedHintsVarName: string = '';
+    // eslint-disable-next-line prefer-const
     let wordleData: Partial<WordleAnswer> = {
-        puzzleNumber: puzzleNumberParam ? parseInt(puzzleNumberParam) : 0,
+        puzzle_number: puzzleNumberParam ? parseInt(puzzleNumberParam) : 0,
         date: targetDateParam,
         answer: '',
         hints: [],
@@ -104,18 +107,21 @@ export async function GET(request: Request) {
         }
 
         wordleData.answer = extractedAnswer ? extractedAnswer.toUpperCase() : '';
-        wordleData.hints = extractedHints;
+        wordleData.hints = extractedHints.map((hint) => ({
+          type: 'clue',
+          value: hint
+        }));
 
         const pageTitle = await page.title();
         const titlePuzzleMatch = pageTitle.match(/#(\d+)/) || pageTitle.match(/Wordle Hint For.*#(\d+)/); 
-        wordleData.puzzleNumber = titlePuzzleMatch && titlePuzzleMatch[1] ? parseInt(titlePuzzleMatch[1], 10) : (puzzleNumberParam ? parseInt(puzzleNumberParam) : 0);
+        wordleData.puzzle_number = titlePuzzleMatch && titlePuzzleMatch[1] ? parseInt(titlePuzzleMatch[1], 10) : (puzzleNumberParam ? parseInt(puzzleNumberParam) : 0);
       },
       maxRequestsPerCrawl: 1,
     });
 
     await crawler.run([{ url }]);
 
-    console.log("Extracted Puzzle Number (Final):", wordleData.puzzleNumber);
+    console.log("Extracted Puzzle Number (Final):", wordleData.puzzle_number);
     console.log("Extracted Answer (Final):", wordleData.answer);
     console.log("Extracted Hints (Final):", wordleData.hints);
 
@@ -144,15 +150,15 @@ export async function GET(request: Request) {
 
     return NextResponse.json(wordleData as WordleAnswer);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Scraping error:', error);
-    let errorMessage = error.message;
-    if (error.stack) {
+    let errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (error instanceof Error && error.stack) {
         errorMessage += `\nStack: ${error.stack}`;
     }
     return NextResponse.json({
       error: `Scraping error: ${errorMessage}`,
-      cause: error.cause?.message || 'No specific cause reported'
+      cause: error instanceof Error ? error.cause?.toString() || 'No specific cause reported' : 'Unknown cause'
     }, { status: 500 });
   }
 } 

@@ -41,7 +41,7 @@ export default function ArchivePage() {
         combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
         setAllAnswers(combined);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to load archive data:", err);
         setError("Failed to load archive data. Please try again later.");
       } finally {
@@ -54,7 +54,7 @@ export default function ArchivePage() {
   const filteredAnswers = allAnswers.filter(answer => {
     const matchesSearch = answer.answer.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          answer.date.includes(searchTerm) ||
-                         answer.puzzleNumber.toString().includes(searchTerm);
+                         answer.puzzle_number.toString().includes(searchTerm);
     const matchesDifficulty = difficultyFilter === 'All' || answer.difficulty === difficultyFilter;
     return matchesSearch && matchesDifficulty;
   });
@@ -184,9 +184,9 @@ export default function ArchivePage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">
-                      Puzzle #{answer.puzzleNumber}
+                      Puzzle #{answer.puzzle_number}
                     </CardTitle>
-                    <Badge className={getDifficultyColor(answer.difficulty)} variant="outline">
+                    <Badge className={getDifficultyColor(answer.difficulty || 'Medium')} variant="outline">
                       {answer.difficulty}
                     </Badge>
                   </div>
@@ -215,7 +215,7 @@ export default function ArchivePage() {
                       {answer.hints.slice(0, 2).map((hint, index) => (
                         <li key={`preview-hint-${index}`} className="flex items-start gap-1">
                           <span className="text-blue-500">•</span>
-                          <span className="line-clamp-1">{hint}</span>
+                          <span className="line-clamp-1">{typeof hint === 'string' ? hint : hint.value}</span>
                         </li>
                       ))}
                       {answer.hints.length > 2 && (

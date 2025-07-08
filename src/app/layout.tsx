@@ -58,6 +58,7 @@ export default function RootLayout({
           src="//unpkg.com/same-runtime/dist/index.global.js"
         />
         <Script
+          id="structured-data"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({

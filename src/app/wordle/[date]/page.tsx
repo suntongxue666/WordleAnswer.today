@@ -1,6 +1,3 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,7 +25,7 @@ import ClientBody from '@/app/ClientBody';
 import { WordlePuzzle } from '@/components/WordlePuzzle';
 
 interface PageProps {
-  params: { date: string };
+  params: Promise<{ date: string }>;
 }
 
 const RenderWordleLetters = ({ word, revealed }: { word: string; revealed: boolean }) => {
@@ -56,7 +53,7 @@ const RenderWordleLetters = ({ word, revealed }: { word: string; revealed: boole
   };
 
 export default async function WordleDatePage({ params }: PageProps) {
-  const { date } = params;
+  const { date } = await params;
   const wordleData = await getTodaysWordle(date);
 
   if (!wordleData) {

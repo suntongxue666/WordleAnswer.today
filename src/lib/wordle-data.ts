@@ -85,13 +85,13 @@ export async function getRecentWordleAnswers(limit: number = 10): Promise<Wordle
   }
 
   // 转换数据格式
-  return data.map((item: any) => ({
+  return data.map((item: WordleAnswer) => ({
     date: item.date,
     puzzle_number: item.puzzle_number,
     answer: item.answer,
     hints: Array.isArray(item.hints) ? item.hints : [],
-    difficulty: item.difficulty,
-    definition: item.definition,
+    difficulty: item.difficulty || undefined,
+    definition: item.definition || undefined,
   }));
 }
 
