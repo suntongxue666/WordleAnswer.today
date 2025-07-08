@@ -101,9 +101,16 @@ export default async function HomePage() {
               </div>
             </>
           ) : (
-            <p className="text-lg text-gray-700">
-              Could not load any Wordle data. Please check back later.
-            </p>
+            <div className="text-lg text-gray-700">
+              <p>Could not load any Wordle data. Please check back later.</p>
+              <div className="mt-4 p-4 bg-gray-100 text-sm">
+                <p>Debug info:</p>
+                <p>Today's date: {formattedTodaysDate}</p>
+                <p>Yesterday's date: {formattedYesterdayDate}</p>
+                <p>Recent wordles count: {recentWordles.length}</p>
+                <p>Environment: {process.env.NODE_ENV}</p>
+              </div>
+            </div>
           )}
         </main>
       </div>
