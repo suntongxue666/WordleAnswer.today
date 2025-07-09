@@ -79,11 +79,11 @@ export function WordlePuzzle({ date, puzzleNumber, answer, hints, difficulty, de
         <div className="flex justify-between items-center mb-2">
             <CardTitle>Today's Wordle Answer/Hint - Wordle {formattedMonthDay}</CardTitle>
             <span className="text-sm font-semibold text-gray-600">
-                Puzzle #{calculatedPuzzleNumber}
+                Wordle Puzzle #{calculatedPuzzleNumber}
             </span>
         </div>
         <CardDescription>
-          {formattedDayOfWeek}, {formattedDateForDisplay} - Puzzle #{calculatedPuzzleNumber}
+          {formattedDayOfWeek}, {formattedDateForDisplay} - Wordle Puzzle #{calculatedPuzzleNumber}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
