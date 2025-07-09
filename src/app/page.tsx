@@ -33,7 +33,9 @@ import {
 import ClientBody from '@/app/ClientBody';
 import { WordlePuzzle } from '@/components/WordlePuzzle';
 import { RecentWordleCard } from '@/components/RecentWordleCard';
-import { format, parseISO, subDays } from 'date-fns';
+import { WordleAnalysis } from '@/components/WordleAnalysis';
+import { HowToPlayWordle } from '@/components/HowToPlayWordle';
+import { format, subDays } from 'date-fns';
 
 export default async function HomePage() {
   const todaysDate = new Date();
@@ -101,6 +103,22 @@ export default async function HomePage() {
                     </Button>
                   </Link>
                 </div>
+              </div>
+              
+              {/* Wordle Analysis Section */}
+              <div className="mt-12 w-full max-w-4xl mx-auto">
+                <WordleAnalysis
+                  date={wordleToDisplay.date}
+                  answer={wordleToDisplay.answer}
+                  puzzleNumber={wordleToDisplay.puzzle_number}
+                  difficulty={wordleToDisplay.difficulty}
+                  hints={wordleToDisplay.hints}
+                />
+              </div>
+              
+              {/* How to Play Section */}
+              <div className="mt-12 w-full max-w-4xl mx-auto">
+                <HowToPlayWordle />
               </div>
             </>
           ) : (
