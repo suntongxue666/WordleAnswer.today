@@ -27,11 +27,11 @@ export async function GET(request: Request) {
     // Construct the URL for wordlehint.top
     const url = `https://www.wordlehint.top/todays-wordle-answer-${formattedUrlDate}`;
     
-    // Define proxy for Crawlee
-    const proxyUrl = 'http://127.0.0.1:7890'; // 你的 ClashX 代理地址
-    const proxyConfiguration = new ProxyConfiguration({
-        proxyUrls: [proxyUrl]
-    });
+    // Define proxy for Crawlee (disabled for testing)
+    // const proxyUrl = 'http://127.0.0.1:7890'; // 你的 ClashX 代理地址
+    // const proxyConfiguration = new ProxyConfiguration({
+    //     proxyUrls: [proxyUrl]
+    // });
 
     console.log(`Scraping URL with Crawlee: ${url}`);
 
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
     };
 
     const crawler = new PlaywrightCrawler({
-      proxyConfiguration,
+      // proxyConfiguration, // Disabled for testing
       requestHandler: async ({ page, request }) => {
         await page.setExtraHTTPHeaders({ 'User-Agent': 'curl/8.7.1' });
 

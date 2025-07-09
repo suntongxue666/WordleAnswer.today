@@ -57,6 +57,9 @@ export default async function HomePage() {
   const recentWordlesWithToday = wordleToDisplay 
     ? [wordleToDisplay, ...recentWordles.filter(wordle => wordle.date !== wordleToDisplay?.date)]
     : recentWordles;
+  
+  // 显示所有最近的Wordles（SEO优化：更多内容有利于搜索引擎收录）
+  const displayWordles = recentWordlesWithToday;
 
   return (
     <ClientBody>
@@ -78,8 +81,8 @@ export default async function HomePage() {
               />
               <div className="mt-8 w-full max-w-lg md:max-w-4xl mx-auto">
                 <h2 className="text-2xl font-bold mb-4 text-left">Recent Wordle Answers</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {recentWordlesWithToday
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {displayWordles
                     .map((wordle) => (
                       <RecentWordleCard
                         key={wordle.id}
