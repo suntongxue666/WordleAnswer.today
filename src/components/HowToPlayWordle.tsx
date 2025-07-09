@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
-  GameController2, 
+  Gamepad2, 
   Target, 
   CheckCircle, 
   AlertCircle, 
@@ -19,7 +19,7 @@ export function HowToPlayWordle() {
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <div className="flex items-center gap-2">
-          <GameController2 className="h-5 w-5 text-green-600" />
+          <Gamepad2 className="h-5 w-5 text-green-600" />
           <CardTitle className="text-xl">How to Play Wordle Puzzle</CardTitle>
         </div>
       </CardHeader>

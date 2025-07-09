@@ -1,0 +1,49 @@
+name: Daily Wordle Scraper
+
+on:
+  schedule:
+    # 美国东部时间 00:03 (UTC 04:03)
+    - cron: '3 4 * * *'
+    # 美国东部时间 00:29 (UTC 04:29)
+    - cron: '29 4 * * *'
+    # 美国东部时间 01:01 (UTC 05:01)
+    - cron: '1 5 * * *'
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  scrape-wordle:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Scrape Wordle Data
+      run: |
+        TODAY=$(date +%Y-%m-%d)
+        echo "Scraping Wordle data for $TODAY"
+        
+        # 调用你的 API 端点
+        RESPONSE=$(curl -s -X GET \
+          "https://wordle-answer-today.vercel.app/api/wordle-scrape?date=$TODAY" \
+          -H "User-Agent: GitHub-Actions-Scraper")
+        
+        echo "Response: $RESPONSE"
+        
+        # 检查响应状态
+        if echo "$RESPONSE" | grep -q '"answer"'; then
+          echo "✅ Scraping successful"
+        else
+          echo "❌ Scraping failed"
+          exit 1
+        fi
+        
+    - name: Wait for random delay
+      run: |
+        # 随机等待 0-30 秒，避免过于规律的请求
+        DELAY=$(shuf -i 0-30 -n 1)
+        echo "Waiting $DELAY seconds..."
+        sleep $DELAY
+        
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "Wordle scraping failed at $(date)"
+        # 这里可以添加通知逻辑，比如发送邮件或 Slack 消息
