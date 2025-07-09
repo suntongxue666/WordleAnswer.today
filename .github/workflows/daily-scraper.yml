@@ -2,12 +2,14 @@ name: Daily Wordle Scraper
 
 on:
   schedule:
-    # 美国东部时间 00:03 (UTC 04:03)
+    # 纽约时间 00:03 (UTC 04:03)
     - cron: '3 4 * * *'
-    # 美国东部时间 00:29 (UTC 04:29)
-    - cron: '29 4 * * *'
-    # 美国东部时间 01:01 (UTC 05:01)
-    - cron: '1 5 * * *'
+    # 纽约时间 00:30 (UTC 04:30)
+    - cron: '30 4 * * *'
+    # 纽约时间 01:00 (UTC 05:00)
+    - cron: '0 5 * * *'
+    # 纽约时间 03:00 (UTC 07:00)
+    - cron: '0 7 * * *'
   workflow_dispatch: # 允许手动触发
 
 jobs:
