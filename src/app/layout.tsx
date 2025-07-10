@@ -29,6 +29,10 @@ export default function RootLayout({
             gtag('config', 'G-MMGE1750H4');
           `}
         </Script>
+        
+        {/* Favicon */}
+        <link rel="icon" type="image/png" sizes="64x64" href="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//Wodle%20Fav%20icon-64.png" />
+        <link rel="shortcut icon" href="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//Wodle%20Fav%20icon-64.png" />
       </head>
       <body className={inter.className}>
         {children}
