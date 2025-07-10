@@ -30,7 +30,7 @@ import { WordlePuzzle } from '@/components/WordlePuzzle';
 import { WordleAnalysis } from '@/components/WordleAnalysis';
 import { RecentWordleCard } from '@/components/RecentWordleCard';
 import { format, addDays, subDays, parseISO } from 'date-fns';
-import { generateSEOMetadata } from '@/lib/seo-utils';
+import { generateSEOMetadata, generateSecondaryPageSEOMetadata } from '@/lib/seo-utils';
 import type { Metadata } from 'next';
 
 interface PageProps {
@@ -40,7 +40,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { date } = await params;
   const wordleData = await getTodaysWordle(date);
-  return generateSEOMetadata(wordleData);
+  return generateSecondaryPageSEOMetadata(date, wordleData);
 }
 
 const RenderWordleLetters = ({ word, revealed }: { word: string; revealed: boolean }) => {
