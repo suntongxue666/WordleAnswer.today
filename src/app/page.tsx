@@ -36,6 +36,22 @@ import { RecentWordleCard } from '@/components/RecentWordleCard';
 import { WordleAnalysis } from '@/components/WordleAnalysis';
 import { HowToPlayWordle } from '@/components/HowToPlayWordle';
 import { format, subDays } from 'date-fns';
+import { generateSEOMetadata } from '@/lib/seo-utils';
+import type { Metadata } from 'next';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const todaysDate = new Date();
+  const formattedTodaysDate = format(todaysDate, 'yyyy-MM-dd');
+  const formattedYesterdayDate = format(subDays(todaysDate, 1), 'yyyy-MM-dd');
+
+  // Try to get today's data first, then yesterday's for metadata
+  let wordleToDisplay = await getTodaysWordle(formattedTodaysDate);
+  if (!wordleToDisplay) {
+    wordleToDisplay = await getTodaysWordle(formattedYesterdayDate);
+  }
+
+  return generateSEOMetadata(wordleToDisplay);
+}
 
 export default async function HomePage() {
   const todaysDate = new Date();

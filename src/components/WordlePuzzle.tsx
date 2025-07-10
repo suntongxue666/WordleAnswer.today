@@ -76,15 +76,15 @@ export function WordlePuzzle({ date, puzzleNumber, answer, hints, difficulty, de
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
-        <div className="flex justify-between items-center mb-2">
-            <CardTitle>Today's Wordle Answer/Hint - Wordle {formattedMonthDay}</CardTitle>
-            <span className="text-sm font-semibold text-gray-600">
-                Wordle Puzzle #{calculatedPuzzleNumber}
-            </span>
+        <CardTitle className="text-center">Today's Wordle Answer/Hint - Wordle {formattedMonthDay}</CardTitle>
+        <div className="text-center">
+          <div className="text-lg font-bold text-gray-800 mb-1">
+            Wordle Puzzle #{calculatedPuzzleNumber}
+          </div>
+          <CardDescription className="text-center">
+            {formattedDayOfWeek}, {formattedDateForDisplay}
+          </CardDescription>
         </div>
-        <CardDescription>
-          {formattedDayOfWeek}, {formattedDateForDisplay} - Wordle Puzzle #{calculatedPuzzleNumber}
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {difficulty && (
