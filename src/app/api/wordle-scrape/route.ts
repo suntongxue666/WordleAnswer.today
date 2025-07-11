@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
 import { PlaywrightCrawler, ProxyConfiguration } from 'crawlee';
 import { WordleAnswer } from '@/lib/wordle-data'; // Import the interface
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client with error handling
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('Missing Supabase environment variables');
+}
+
+const supabase = supabaseUrl && supabaseServiceKey 
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : null;
 
 // Helper function to format date for wordlehint.top URL (e.g., Fri-Jul-04-2025)
 const formatUrlDateForWordleHintTop = (date: Date): string => {
@@ -148,7 +161,58 @@ export async function GET(request: Request) {
         }, { status: 500 });
     }
 
-    return NextResponse.json(wordleData as WordleAnswer);
+    // Save scraped data to database
+    try {
+      if (!supabase) {
+        console.warn("Supabase client not initialized, skipping database save");
+        return NextResponse.json({
+          ...wordleData,
+          saved: false,
+          message: 'Data scraped successfully but not saved to database (missing credentials)'
+        } as WordleAnswer & { saved: boolean; message: string });
+      }
+
+      console.log("Saving scraped data to database...");
+      
+      const { data, error } = await supabase
+        .from('wordle-answers')
+        .upsert({
+          date: wordleData.date,
+          puzzle_number: wordleData.puzzle_number,
+          answer: wordleData.answer,
+          hints: wordleData.hints,
+          difficulty: wordleData.difficulty,
+          definition: wordleData.definition
+        }, {
+          onConflict: 'date' // Update if record exists with same date
+        })
+        .select();
+
+      if (error) {
+        console.error("Database save error:", error);
+        return NextResponse.json({ 
+          error: 'Failed to save scraped data to database',
+          details: error.message,
+          scrapedData: wordleData 
+        }, { status: 500 });
+      }
+
+      console.log("Successfully saved to database:", data);
+      
+      return NextResponse.json({
+        ...wordleData,
+        saved: true,
+        message: 'Data scraped and saved successfully'
+      } as WordleAnswer & { saved: boolean; message: string });
+      
+    } catch (dbError) {
+      console.error("Database operation failed:", dbError);
+      return NextResponse.json({ 
+        error: 'Database operation failed',
+        details: dbError instanceof Error ? dbError.message : 'Unknown database error',
+        scrapedData: wordleData 
+      }, { status: 500 });
+    }
 
   } catch (error: unknown) {
     console.error('Scraping error:', error);
