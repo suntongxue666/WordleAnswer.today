@@ -58,26 +58,32 @@ export default async function HomePage() {
   const formattedTodaysDate = format(todaysDate, 'yyyy-MM-dd');
   const formattedYesterdayDate = format(subDays(todaysDate, 1), 'yyyy-MM-dd');
 
+  const recentWordles = await getRecentWordles();
+  
+  // 获取最新可用的数据作为主要显示内容
   let wordleToDisplay: WordleAnswer | null = null;
-
-  // 尝试获取今天的数据
+  
+  // 首先尝试今天的数据
   wordleToDisplay = await getTodaysWordle(formattedTodaysDate);
-
-  // 如果获取不到今天的数据，显示前一天的
+  
+  // 如果没有今天的，尝试昨天的
   if (!wordleToDisplay) {
     console.log(`Today's Wordle (${formattedTodaysDate}) not found, trying yesterday's (${formattedYesterdayDate}).`);
     wordleToDisplay = await getTodaysWordle(formattedYesterdayDate);
   }
-
-  const recentWordles = await getRecentWordles();
   
-  // 将今天的数据加到Recent列表的第一位（如果存在）
-  const recentWordlesWithToday = wordleToDisplay 
-    ? [wordleToDisplay, ...recentWordles.filter(wordle => wordle.date !== wordleToDisplay?.date)]
-    : recentWordles;
+  // 如果今天和昨天都没有，使用最新的历史数据
+  if (!wordleToDisplay && recentWordles.length > 0) {
+    console.log(`No recent data found, using latest from history.`);
+    wordleToDisplay = recentWordles[0];
+  }
   
-  // 显示所有最近的Wordles（SEO优化：更多内容有利于搜索引擎收录）
-  const displayWordles = recentWordlesWithToday;
+  // 将显示的数据从Recent列表中移除，避免重复
+  const recentWordlesFiltered = recentWordles.filter(wordle => 
+    wordleToDisplay ? wordle.date !== wordleToDisplay.date : true
+  );
+  
+  const displayWordles = recentWordlesFiltered;
 
   return (
     <ClientBody>
@@ -94,30 +100,45 @@ export default async function HomePage() {
             </h1>
           </div>
 
-          {/* Always show Recent Wordle Answers section */}
+          {/* Always show the latest available Wordle data */}
           <div className="mt-8 w-full max-w-lg md:max-w-4xl mx-auto">
             {wordleToDisplay ? (
-              <WordlePuzzle
-                date={wordleToDisplay.date}
-                puzzleNumber={wordleToDisplay.puzzle_number}
-                answer={wordleToDisplay.answer}
-                hints={wordleToDisplay.hints}
-                difficulty={wordleToDisplay.difficulty}
-                definition={wordleToDisplay.definition}
-              />
+              <>
+                {/* Date indicator if not today's data */}
+                {wordleToDisplay.date !== formattedTodaysDate && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center justify-center gap-2 text-blue-700">
+                      <Calendar className="h-4 w-4" />
+                      <span className="text-sm font-medium">
+                        Showing latest available: {format(new Date(wordleToDisplay.date), 'MMMM d, yyyy')}
+                        {wordleToDisplay.date === formattedYesterdayDate ? ' (Yesterday)' : ''}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                <WordlePuzzle
+                  date={wordleToDisplay.date}
+                  puzzleNumber={wordleToDisplay.puzzle_number}
+                  answer={wordleToDisplay.answer}
+                  hints={wordleToDisplay.hints}
+                  difficulty={wordleToDisplay.difficulty}
+                  definition={wordleToDisplay.definition}
+                />
+              </>
             ) : (
               <div className="mb-8 p-6 border-2 border-dashed border-gray-300 rounded-lg">
                 <div className="text-center">
                   <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Today's Wordle Coming Soon</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Wordle Data Available</h3>
                   <p className="text-gray-600 mb-4">
-                    Today's puzzle data is being updated. Check back in a few hours or view recent answers below.
+                    We're working on collecting the latest puzzle data. Please check back later.
                   </p>
                 </div>
               </div>
             )}
 
-            <h2 className="text-2xl font-bold mb-4 text-left">Recent Wordle Answers</h2>
+            <h2 className="text-2xl font-bold mb-4 text-left mt-8">Recent Wordle Answers</h2>
             {displayWordles.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
