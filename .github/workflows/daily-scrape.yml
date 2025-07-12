@@ -1,9 +1,10 @@
-name: Daily Wordle Scraping (Backup)
+name: Daily Wordle Scraping (Primary + Backup)
 on:
   schedule:
-    # Additional backup schedules when Vercel cron is limited
-    - cron: '30 4 * * *'  # NYC: 00:30 EDT
-    - cron: '0 7 * * *'   # NYC: 03:00 EDT
+    # Primary backup schedules (Vercel only has 1 cron slot)
+    - cron: '30 4 * * *'  # NYC: 00:30 EDT - Primary backup
+    - cron: '0 5 * * *'   # NYC: 01:00 EDT - Secondary backup  
+    - cron: '0 7 * * *'   # NYC: 03:00 EDT - Final backup
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -13,11 +14,11 @@ jobs:
       - name: Trigger Wordle Scraping
         run: |
           TODAY=$(date +%Y-%m-%d)
-          echo "Triggering backup scrape for date: $TODAY"
+          echo "Triggering scrape for date: $TODAY"
           
           # Try direct API call
           RESPONSE=$(curl -s -w "%{http_code}" \
-            -H "User-Agent: GitHub-Actions-Backup-Scraper" \
+            -H "User-Agent: GitHub-Actions-Primary-Scraper" \
             "https://wordle-answer-today.vercel.app/api/wordle-scrape?date=$TODAY")
           
           HTTP_CODE=${RESPONSE: -3}
@@ -27,8 +28,12 @@ jobs:
           echo "Response: $RESPONSE_BODY"
           
           if [ $HTTP_CODE -ge 200 ] && [ $HTTP_CODE -lt 300 ]; then
-            echo "✅ Backup scraping successful"
+            echo "✅ Scraping successful"
+            # Extract answer if possible for logging
+            ANSWER=$(echo "$RESPONSE_BODY" | grep -o '"answer":"[^"]*"' | cut -d'"' -f4 || echo "N/A")
+            echo "📝 Answer: $ANSWER"
           else
-            echo "❌ Backup scraping failed with HTTP $HTTP_CODE"
-            # Don't exit 1 for backup jobs - let them fail silently
+            echo "❌ Scraping failed with HTTP $HTTP_CODE"
+            echo "Response: $RESPONSE_BODY"
+            # Don't exit 1 to allow other scheduled jobs to run
           fi

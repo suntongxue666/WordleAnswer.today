@@ -13,13 +13,15 @@
 - `src/app/api/cron-scrape/route.ts` - cron处理器
 
 ### 调度时间：
-**Vercel Cron (主要，免费计划限制2个):**
+**Vercel Cron (1个任务，账户限制):**
 - 04:03 UTC (00:03 EDT NYC) - 主要抓取时间
-- 05:00 UTC (01:00 EDT NYC) - 备用抓取时间
 
-**GitHub Actions (备用):**
-- 04:30 UTC (00:30 EDT NYC) - 额外备用
+**GitHub Actions (3个任务，承担主要责任):**
+- 04:30 UTC (00:30 EDT NYC) - 主要备用
+- 05:00 UTC (01:00 EDT NYC) - 次要备用
 - 07:00 UTC (03:00 EDT NYC) - 最终备用
+
+⚠️ **说明**: 由于Vercel账户已有其他cron任务，只能使用1个slot
 
 ### 环境变量需求：
 ```bash
