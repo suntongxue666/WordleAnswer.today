@@ -13,10 +13,13 @@
 - `src/app/api/cron-scrape/route.ts` - cron处理器
 
 ### 调度时间：
-- 04:03 UTC (00:03 EDT NYC)
-- 04:30 UTC (00:30 EDT NYC)  
-- 05:00 UTC (01:00 EDT NYC)
-- 07:00 UTC (03:00 EDT NYC)
+**Vercel Cron (主要，免费计划限制2个):**
+- 04:03 UTC (00:03 EDT NYC) - 主要抓取时间
+- 05:00 UTC (01:00 EDT NYC) - 备用抓取时间
+
+**GitHub Actions (备用):**
+- 04:30 UTC (00:30 EDT NYC) - 额外备用
+- 07:00 UTC (03:00 EDT NYC) - 最终备用
 
 ### 环境变量需求：
 ```bash
