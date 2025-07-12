@@ -1,24 +1,36 @@
-name: Daily Wordle Scraper
+name: Daily Wordle Scraping
 on:
   schedule:
-    - cron: "0 12 * * *"  # Daily at UTC 12:00 (8:00 AM New York time)
-  workflow_dispatch: {}
+    # Run at 04:03, 04:30, 05:00, 07:00 UTC (NYC: 00:03, 00:30, 01:00, 03:00 EDT)
+    - cron: '3 4 * * *'
+    - cron: '30 4 * * *' 
+    - cron: '0 5 * * *'
+    - cron: '0 7 * * *'
+  workflow_dispatch: # Allow manual trigger
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-      - name: Install dependencies
+      - name: Trigger Wordle Scraping
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      - name: Run Python scraper and update DB
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: |
-          python scripts/scraper.py | python scripts/update-db.py 
+          TODAY=$(date +%Y-%m-%d)
+          echo "Triggering scrape for date: $TODAY"
+          
+          # Try direct API call first
+          RESPONSE=$(curl -s -w "%{http_code}" \
+            -H "User-Agent: GitHub-Actions-Scraper" \
+            "https://wordle-answer-today.vercel.app/api/wordle-scrape?date=$TODAY")
+          
+          HTTP_CODE=${RESPONSE: -3}
+          RESPONSE_BODY=${RESPONSE%???}
+          
+          echo "HTTP Code: $HTTP_CODE"
+          echo "Response: $RESPONSE_BODY"
+          
+          if [ $HTTP_CODE -ge 200 ] && [ $HTTP_CODE -lt 300 ]; then
+            echo "✅ Scraping successful"
+          else
+            echo "❌ Scraping failed with HTTP $HTTP_CODE"
+            exit 1
+          fi

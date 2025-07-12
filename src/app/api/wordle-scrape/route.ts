@@ -26,12 +26,18 @@ const formatUrlDateForWordleHintTop = (date: Date): string => {
 // This API route will handle scraping for a specific date from wordlehint.top
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const targetDateParam = searchParams.get('date'); // e.g., '2025-07-04'
+  let targetDateParam = searchParams.get('date'); // e.g., '2025-07-04'
   // puzzleNumberParam is still passed from frontend, but not used for URL construction on this site
   const puzzleNumberParam = searchParams.get('puzzleNumber'); 
 
-  if (!targetDateParam) {
-    return NextResponse.json({ error: 'Missing date parameter' }, { status: 400 });
+  // Handle 'TODAY' parameter for external cron jobs
+  if (targetDateParam === 'TODAY' || !targetDateParam) {
+    const today = new Date();
+    // Format as YYYY-MM-DD
+    targetDateParam = today.getFullYear() + '-' + 
+      String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(today.getDate()).padStart(2, '0');
+    console.log(`Using today's date: ${targetDateParam}`);
   }
   try {
     const dateObj = new Date(targetDateParam);
