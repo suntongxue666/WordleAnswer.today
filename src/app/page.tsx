@@ -94,8 +94,9 @@ export default async function HomePage() {
             </h1>
           </div>
 
-          {wordleToDisplay ? (
-            <>
+          {/* Always show Recent Wordle Answers section */}
+          <div className="mt-8 w-full max-w-lg md:max-w-4xl mx-auto">
+            {wordleToDisplay ? (
               <WordlePuzzle
                 date={wordleToDisplay.date}
                 puzzleNumber={wordleToDisplay.puzzle_number}
@@ -104,8 +105,21 @@ export default async function HomePage() {
                 difficulty={wordleToDisplay.difficulty}
                 definition={wordleToDisplay.definition}
               />
-              <div className="mt-8 w-full max-w-lg md:max-w-4xl mx-auto">
-                <h2 className="text-2xl font-bold mb-4 text-left">Recent Wordle Answers</h2>
+            ) : (
+              <div className="mb-8 p-6 border-2 border-dashed border-gray-300 rounded-lg">
+                <div className="text-center">
+                  <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Today's Wordle Coming Soon</h3>
+                  <p className="text-gray-600 mb-4">
+                    Today's puzzle data is being updated. Check back in a few hours or view recent answers below.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <h2 className="text-2xl font-bold mb-4 text-left">Recent Wordle Answers</h2>
+            {displayWordles.length > 0 ? (
+              <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {displayWordles
                     .map((wordle) => (
@@ -126,36 +140,34 @@ export default async function HomePage() {
                     </Button>
                   </Link>
                 </div>
+              </>
+            ) : (
+              <div className="text-center p-8 border rounded-lg bg-gray-50">
+                <p className="text-gray-600">No recent Wordle data available.</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  The data collection system is being updated. Please check back later.
+                </p>
               </div>
-              
-              {/* Wordle Analysis Section */}
-              <div className="mt-12 w-full max-w-4xl mx-auto">
-                <WordleAnalysis
-                  date={wordleToDisplay.date}
-                  answer={wordleToDisplay.answer}
-                  puzzleNumber={wordleToDisplay.puzzle_number}
-                  difficulty={wordleToDisplay.difficulty}
-                  hints={wordleToDisplay.hints}
-                />
-              </div>
-              
-              {/* How to Play Section */}
-              <div className="mt-12 w-full max-w-4xl mx-auto">
-                <HowToPlayWordle />
-              </div>
-            </>
-          ) : (
-            <div className="text-lg text-gray-700">
-              <p>Could not load any Wordle data. Please check back later.</p>
-              <div className="mt-4 p-4 bg-gray-100 text-sm">
-                <p>Debug info:</p>
-                <p>Today's date: {formattedTodaysDate}</p>
-                <p>Yesterday's date: {formattedYesterdayDate}</p>
-                <p>Recent wordles count: {recentWordles.length}</p>
-                <p>Environment: {process.env.NODE_ENV}</p>
-              </div>
+            )}
+          </div>
+          
+          {/* Wordle Analysis Section - Only show if we have today's data */}
+          {wordleToDisplay && (
+            <div className="mt-12 w-full max-w-4xl mx-auto">
+              <WordleAnalysis
+                date={wordleToDisplay.date}
+                answer={wordleToDisplay.answer}
+                puzzleNumber={wordleToDisplay.puzzle_number}
+                difficulty={wordleToDisplay.difficulty}
+                hints={wordleToDisplay.hints}
+              />
             </div>
           )}
+          
+          {/* How to Play Section - Always show */}
+          <div className="mt-12 w-full max-w-4xl mx-auto">
+            <HowToPlayWordle />
+          </div>
         </main>
       </div>
     </ClientBody>
