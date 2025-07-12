@@ -78,12 +78,11 @@ export default async function HomePage() {
     wordleToDisplay = recentWordles[0];
   }
   
-  // 将显示的数据从Recent列表中移除，避免重复
-  const recentWordlesFiltered = recentWordles.filter(wordle => 
-    wordleToDisplay ? wordle.date !== wordleToDisplay.date : true
-  );
-  
-  const displayWordles = recentWordlesFiltered;
+  // Recent Wordle Answers: 显示所有可用数据，包括当前显示的(SEO友好)
+  // 如果有主要显示数据，确保它在列表第一位
+  const displayWordles = wordleToDisplay 
+    ? [wordleToDisplay, ...recentWordles.filter(wordle => wordle.date !== wordleToDisplay.date)]
+    : recentWordles;
 
   return (
     <ClientBody>
