@@ -50,7 +50,13 @@ export async function getTodaysWordle(testDate?: string): Promise<WordleAnswer |
   const dateToFetch = testDate || format(new Date(), 'yyyy-MM-dd');
   console.log(`[getTodaysWordle] Attempting to fetch Wordle for date: ${dateToFetch}`);
 
-  const { data, error } = await supabase
+  const supabaseClient = supabase;
+  if (!supabaseClient) {
+    console.error('[getTodaysWordle] Supabase client not available');
+    return null;
+  }
+
+  const { data, error } = await supabaseClient
     .from('wordle-answers')
     .select('*')
     .eq('date', dateToFetch)
@@ -70,7 +76,13 @@ export async function getTodaysWordle(testDate?: string): Promise<WordleAnswer |
 
 // 获取最近的 Wordle 答案（根据需求可以按日期排序或限制数量）
 export async function getRecentWordleAnswers(limit: number = 10): Promise<WordleData[]> {
-  const { data, error } = await supabase
+  const supabaseClient = supabase;
+  if (!supabaseClient) {
+    console.error('[getRecentWordleAnswers] Supabase client not available');
+    return [];
+  }
+
+  const { data, error } = await supabaseClient
     .from('wordle-answers')
     .select('*')
     .order('date', { ascending: false }) // 按日期降序排序
@@ -180,6 +192,12 @@ export const getDifficultyColor = (difficulty: string): string => {
 };
 
 export async function getRecentWordles(days: number = 30): Promise<WordleAnswer[]> {
+  const supabaseClient = supabase;
+  if (!supabaseClient) {
+    console.error('[getRecentWordles] Supabase client not available');
+    return [];
+  }
+
   const today = new Date();
   const thirtyDaysAgo = new Date(today);
   thirtyDaysAgo.setDate(today.getDate() - days);
@@ -189,7 +207,7 @@ export async function getRecentWordles(days: number = 30): Promise<WordleAnswer[
 
   console.log(`[getRecentWordles] Fetching Wordles from ${startDate} to ${endDate}`);
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('wordle-answers')
     .select('*')
     .gte('date', startDate)

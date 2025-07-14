@@ -275,7 +275,8 @@ export async function GET(request: Request) {
 
     // Save scraped data to database
     try {
-      if (!getSupabase()) {
+      const supabaseClient = getSupabase();
+      if (!supabaseClient) {
         console.warn("Supabase client not initialized, skipping database save");
         return NextResponse.json({
           ...wordleData,
@@ -286,7 +287,7 @@ export async function GET(request: Request) {
 
       console.log("Saving scraped data to database...");
       
-      const { data, error } = await getSupabase()
+      const { data, error } = await supabaseClient
         .from('wordle-answers')
         .upsert({
           date: wordleData.date,

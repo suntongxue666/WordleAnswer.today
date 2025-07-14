@@ -1,8 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-let supabaseClient: any = null;
+let supabaseClient: SupabaseClient | null = null;
 
-export const getSupabase = () => {
+export const getSupabase = (): SupabaseClient | null => {
   if (supabaseClient) {
     return supabaseClient;
   }
@@ -11,9 +11,18 @@ export const getSupabase = () => {
   const supabaseAnonKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase URL or Anon Key environment variables.');
+    console.warn('Missing Supabase URL or Service Role Key environment variables.');
+    return null;
   }
 
-  supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-  return supabaseClient;
-}; 
+  try {
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    return supabaseClient;
+  } catch (error) {
+    console.error('Error creating Supabase client:', error);
+    return null;
+  }
+};
+
+// Export a default supabase client for compatibility
+export const supabase = getSupabase(); 
