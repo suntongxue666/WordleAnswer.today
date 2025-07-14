@@ -14,14 +14,14 @@
 
 ### 调度时间：
 **Vercel Cron (1个任务，账户限制):**
-- 04:03 UTC (00:03 EDT NYC) - 主要抓取时间
+- 05:01 UTC (01:01 EDT NYC) - 主要抓取时间，优化为NYT review页面发布后
 
 **GitHub Actions (3个任务，承担主要责任):**
-- 04:30 UTC (00:30 EDT NYC) - 主要备用
-- 05:00 UTC (01:00 EDT NYC) - 次要备用
-- 07:00 UTC (03:00 EDT NYC) - 最终备用
+- 05:01 UTC (01:01 EDT NYC) - 主要备用 (1分钟后)
+- 05:15 UTC (01:15 EDT NYC) - 次要备用
+- 05:30 UTC (01:30 EDT NYC) - 最终备用
 
-⚠️ **说明**: 由于Vercel账户已有其他cron任务，只能使用1个slot
+⚠️ **说明**: 抓取时间调整为美东时间01:01，确保NYT review页面已发布
 
 ### 环境变量需求：
 ```bash
@@ -69,8 +69,16 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_key
 
 ## API更新
 
-### 支持'TODAY'参数：
-现在API支持 `date=TODAY` 参数，会自动使用当前日期
+### 新的抓取策略：
+1. **主要来源**: NYT review页面 (`https://www.nytimes.com/YYYY/MM/DD/crosswords/wordle-review-XXXX.html`)
+2. **备用来源**: NYT游戏页面 (`https://www.nytimes.com/games/wordle/index.html`)
+3. **最终备用**: wordlehint.top
+
+### 关键改进：
+- **智能hints生成**: 根据答案自动生成多种类型的提示，不再依赖第三方网站
+- **难度自动评估**: 基于字母组合、元音数量、常用词等因素自动评估难度
+- **多重抓取策略**: 优先从NYT官方review页面获取答案，确保准确性
+- **更准确的期数计算**: 基于已知的基准日期自动计算puzzle number
 
 ### 手动触发 URL：
 ```bash

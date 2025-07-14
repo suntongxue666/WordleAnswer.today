@@ -55,14 +55,15 @@ export async function getTodaysWordle(testDate?: string): Promise<WordleAnswer |
     .select('*')
     .eq('date', dateToFetch)
     .order('created_at', { ascending: false })
-    .limit(1);
+    .limit(1)
+    .single(); // Use .single() for a single record
 
-  if (error) {
+  if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
     console.error(`[getTodaysWordle] Error fetching Wordle for ${dateToFetch}:`, error);
     return null;
   }
 
-  const result = (data && data.length > 0) ? data[0] as WordleAnswer : null;
+  const result = data as WordleAnswer | null;
   console.log(`[getTodaysWordle] Result for ${dateToFetch}: ${result ? `Found (Puzzle: ${result.puzzle_number}, Answer: ${result.answer})` : 'Not Found'}`);
   return result;
 }
@@ -73,7 +74,7 @@ export async function getRecentWordleAnswers(limit: number = 10): Promise<Wordle
     .from('wordle-answers')
     .select('*')
     .order('date', { ascending: false }) // 按日期降序排序
-    .limit(limit); // 限制返回数量
+    .limit(limit);
 
   if (error) {
     console.error('Error fetching recent Wordle answers:', error);

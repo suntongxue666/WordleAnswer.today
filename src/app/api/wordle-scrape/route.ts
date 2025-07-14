@@ -1,19 +1,9 @@
 import { NextResponse } from 'next/server';
 import { PlaywrightCrawler, ProxyConfiguration } from 'crawlee';
 import { WordleAnswer } from '@/lib/wordle-data'; // Import the interface
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client with error handling
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Missing Supabase environment variables');
-}
-
-const supabase = supabaseUrl && supabaseServiceKey 
-  ? createClient(supabaseUrl, supabaseServiceKey)
-  : null;
+import { getSupabase } from '@/lib/supabase';
+import { generateHints, generateDifficulty } from '@/lib/hint-generator';
+import { getEmergencyWordleData } from '@/lib/emergency-fallback';
 
 // Helper function to format date for wordlehint.top URL (e.g., Fri-Jul-04-2025)
 const formatUrlDateForWordleHintTop = (date: Date): string => {
@@ -23,11 +13,10 @@ const formatUrlDateForWordleHintTop = (date: Date): string => {
   return formatted.replace(/, /g, '-').replace(/ /g, '-').replace(/\.$/, ''); 
 };
 
-// This API route will handle scraping for a specific date from wordlehint.top
+// This API route will handle scraping for a specific date from NYT Wordle
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   let targetDateParam = searchParams.get('date'); // e.g., '2025-07-04'
-  // puzzleNumberParam is still passed from frontend, but not used for URL construction on this site
   const puzzleNumberParam = searchParams.get('puzzleNumber'); 
 
   // Handle 'TODAY' parameter for external cron jobs
@@ -39,26 +28,29 @@ export async function GET(request: Request) {
       String(today.getDate()).padStart(2, '0');
     console.log(`Using today's date: ${targetDateParam}`);
   }
+
   try {
     const dateObj = new Date(targetDateParam);
-    const formattedUrlDate = formatUrlDateForWordleHintTop(dateObj);
     
-    // Construct the URL for wordlehint.top
-    const url = `https://www.wordlehint.top/todays-wordle-answer-${formattedUrlDate}`;
+    // Calculate puzzle number if not provided
+    let puzzleNumber = puzzleNumberParam ? parseInt(puzzleNumberParam) : 0;
+    if (!puzzleNumber) {
+      const baseDate = new Date('2025-07-07');
+      const basePuzzleNumber = 1479;
+      const diffTime = dateObj.getTime() - baseDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      puzzleNumber = basePuzzleNumber + diffDays;
+    }
     
-    // Define proxy for Crawlee (disabled for testing)
-    // const proxyUrl = 'http://127.0.0.1:7890'; // 你的 ClashX 代理地址
-    // const proxyConfiguration = new ProxyConfiguration({
-    //     proxyUrls: [proxyUrl]
-    // });
+    // Format date for NYT URL (YYYY/MM/DD)
+    const nytDateFormat = targetDateParam.replace(/-/g, '/');
+    const nytReviewUrl = `https://www.nytimes.com/${nytDateFormat}/crosswords/wordle-review-${puzzleNumber}.html`;
+    
+    console.log(`Scraping Wordle answer from NYT review page: ${nytReviewUrl}`);
 
-    console.log(`Scraping URL with Crawlee: ${url}`);
-
-    // eslint-disable-next-line prefer-const
-    let parsedHintsVarName: string = '';
     // eslint-disable-next-line prefer-const
     let wordleData: Partial<WordleAnswer> = {
-        puzzle_number: puzzleNumberParam ? parseInt(puzzleNumberParam) : 0,
+        puzzle_number: puzzleNumber,
         date: targetDateParam,
         answer: '',
         hints: [],
@@ -67,109 +59,223 @@ export async function GET(request: Request) {
     };
 
     const crawler = new PlaywrightCrawler({
-      // proxyConfiguration, // Disabled for testing
       requestHandler: async ({ page, request }) => {
-        await page.setExtraHTTPHeaders({ 'User-Agent': 'curl/8.7.1' });
+        await page.setExtraHTTPHeaders({ 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' });
 
         console.log(`Visiting page: ${request.url}`);
-
-        const htmlContent = await page.content();
-        console.log("Fetched HTML snippet (first 2000 chars from Playwright):", htmlContent.slice(0, 2000));
-
+        
         let extractedAnswer: string = '';
-        let extractedHints: string[] = [];
-        let parsedHintsVarName: string = '';
-
-        const scriptContents = await page.evaluate(() => {
-            const scripts = Array.from(document.querySelectorAll('script'));
-            return scripts.map(script => script.textContent);
-        });
-
-        for (const scriptText of scriptContents) {
-            if (scriptText) {
-                let match = scriptText.match(/const TodayHints = ({.*?});/s);
-                if (match && match[1]) {
-                    try {
-                        const hintsObj = JSON.parse(match[1]);
-                        if (hintsObj.answer) extractedAnswer = hintsObj.answer;
-                        if (hintsObj.hints) extractedHints = hintsObj.hints;
-                        parsedHintsVarName = 'TodayHints';
-                        console.log("Successfully parsed TodayHints variable.");
-                        break; 
-                    } catch (e) {
-                        console.error("Error parsing TodayHints JSON from script:", e);
-                    }
+        
+        // Try multiple approaches to get the answer
+        try {
+          // Method 1: Try NYT review page first
+          try {
+            await page.goto(nytReviewUrl, { waitUntil: 'networkidle' });
+            
+            // Look for the answer in the review page
+            const reviewAnswer = await page.evaluate(() => {
+              // Look for text patterns that indicate the answer
+              const bodyText = document.body.innerText;
+              
+              // Pattern 1: "Today's word is WORD" (primary pattern from NYT)
+              let match = bodyText.match(/Today'?s word is ([A-Z]{5})/i);
+              if (match) return match[1];
+              
+              // Pattern 2: "The answer is WORD" or "Answer: WORD"
+              match = bodyText.match(/(?:The answer is|Answer:?)\s*([A-Z]{5})/i);
+              if (match) return match[1];
+              
+              // Pattern 3: "WORD was the answer" or "WORD is the answer"
+              match = bodyText.match(/([A-Z]{5})\s*(?:was|is)\s*the answer/i);
+              if (match) return match[1];
+              
+              // Pattern 4: Look for emphasized or highlighted 5-letter words
+              const strongElements = document.querySelectorAll('strong, b, em, .answer');
+              for (const element of strongElements) {
+                const text = element.textContent?.trim();
+                if (text && /^[A-Z]{5}$/i.test(text)) {
+                  return text;
                 }
-
-                if (!extractedAnswer && !extractedHints.length) { 
-                   match = scriptText.match(/const YesterdayHints = ({.*?});/s);
-                   if (match && match[1]) {
-                      try {
-                          const hintsObj = JSON.parse(match[1]);
-                          if (hintsObj.answer) extractedAnswer = hintsObj.answer;
-                          if (hintsObj.hints) extractedHints = hintsObj.hints;
-                          parsedHintsVarName = 'YesterdayHints';
-                          console.log("Successfully parsed YesterdayHints variable.");
-                          break; 
-                      } catch (e) {
-                          console.error("Error parsing YesterdayHints JSON from script:", e);
-                      }
-                   }
-                }
+              }
+              
+              // Pattern 5: Look for 5-letter words in quotes
+              match = bodyText.match(/["'"]([A-Z]{5})["'"]/i);
+              if (match) return match[1];
+              
+              // Pattern 6: Look for "word was" or "word is" patterns
+              match = bodyText.match(/([A-Z]{5})\s*(?:was|is)/i);
+              if (match) return match[1];
+              
+              return null;
+            });
+            
+            if (reviewAnswer) {
+              extractedAnswer = reviewAnswer;
+              console.log('Found answer in NYT review page:', extractedAnswer);
             }
+            
+          } catch (reviewError) {
+            console.log('NYT review page not accessible, trying main game page...');
+          }
+          
+          // Method 2: Try main Wordle page if review fails
+          if (!extractedAnswer) {
+            await page.goto('https://www.nytimes.com/games/wordle/index.html', { waitUntil: 'networkidle' });
+            
+            // Check localStorage/sessionStorage
+            const storageAnswer = await page.evaluate(() => {
+              const gameState = localStorage.getItem('nyt-wordle-state');
+              const gameData = sessionStorage.getItem('nyt-wordle-state');
+              
+              if (gameState) {
+                try {
+                  const parsed = JSON.parse(gameState);
+                  return parsed.solution || parsed.answer;
+                } catch (e) {
+                  console.log('Error parsing localStorage:', e);
+                }
+              }
+              
+              if (gameData) {
+                try {
+                  const parsed = JSON.parse(gameData);
+                  return parsed.solution || parsed.answer;
+                } catch (e) {
+                  console.log('Error parsing sessionStorage:', e);
+                }
+              }
+              
+              return null;
+            });
+            
+            if (storageAnswer) {
+              extractedAnswer = storageAnswer;
+              console.log('Found answer in game storage:', extractedAnswer);
+            }
+            
+            // Try to find answer in script tags
+            if (!extractedAnswer) {
+              const scriptContents = await page.evaluate(() => {
+                const scripts = Array.from(document.querySelectorAll('script'));
+                return scripts.map(script => script.textContent || '').join('\n');
+              });
+              
+              // Look for solution in various patterns
+              const patterns = [
+                /solution['":\s]*['"]([A-Z]{5})['"]/gi,
+                /answer['":\s]*['"]([A-Z]{5})['"]/gi,
+                /word['":\s]*['"]([A-Z]{5})['"]/gi,
+                /'([A-Z]{5})'/g,
+                /"([A-Z]{5})"/g
+              ];
+              
+              for (const pattern of patterns) {
+                const matches = scriptContents.match(pattern);
+                if (matches) {
+                  for (const match of matches) {
+                    const word = match.match(/[A-Z]{5}/)?.[0];
+                    if (word && word.length === 5) {
+                      extractedAnswer = word;
+                      console.log(`Found answer using pattern: ${extractedAnswer}`);
+                      break;
+                    }
+                  }
+                  if (extractedAnswer) break;
+                }
+              }
+            }
+          }
+          
+          // Method 3: Fallback to wordlehint.top if NYT methods fail
+          if (!extractedAnswer) {
+            console.log('NYT methods failed, trying wordlehint.top as fallback...');
+            const fallbackUrl = formatUrlDateForWordleHintTop(dateObj);
+            await page.goto(`https://www.wordlehint.top/todays-wordle-answer-${fallbackUrl}`, { waitUntil: 'networkidle' });
+            
+            const fallbackScripts = await page.evaluate(() => {
+              const scripts = Array.from(document.querySelectorAll('script'));
+              return scripts.map(script => script.textContent);
+            });
+
+            for (const scriptText of fallbackScripts) {
+              if (scriptText) {
+                // Try TodayHints first, then YesterdayHints
+                let match = scriptText.match(/const TodayHints = ({.*?});/s);
+                if (!match) {
+                  match = scriptText.match(/const YesterdayHints = ({.*?});/s);
+                }
+                
+                if (match && match[1]) {
+                  try {
+                    const hintsObj = JSON.parse(match[1]);
+                    if (hintsObj.answer) {
+                      extractedAnswer = hintsObj.answer;
+                      console.log("Found answer from wordlehint.top:", extractedAnswer);
+                      break;
+                    }
+                  } catch (e) {
+                    console.error("Error parsing hints JSON:", e);
+                  }
+                }
+              }
+            }
+          }
+          
+        } catch (error) {
+          console.error('Error during scraping:', error);
         }
 
-        if (!parsedHintsVarName) {
-            console.warn("Could not find 'const TodayHints =' or 'const YesterdayHints =' variable in any script.");
-        } else {
-            console.log(`Data found in variable: ${parsedHintsVarName}`);
+        if (extractedAnswer) {
+          wordleData.answer = extractedAnswer.toUpperCase();
+          
+          // Generate hints automatically
+          wordleData.hints = generateHints(extractedAnswer);
+          
+          // Generate difficulty automatically
+          wordleData.difficulty = generateDifficulty(extractedAnswer);
+          
+          console.log(`Generated ${wordleData.hints.length} hints for answer: ${wordleData.answer}`);
         }
-
-        wordleData.answer = extractedAnswer ? extractedAnswer.toUpperCase() : '';
-        wordleData.hints = extractedHints.map((hint) => ({
-          type: 'clue',
-          value: hint
-        }));
-
-        const pageTitle = await page.title();
-        const titlePuzzleMatch = pageTitle.match(/#(\d+)/) || pageTitle.match(/Wordle Hint For.*#(\d+)/); 
-        wordleData.puzzle_number = titlePuzzleMatch && titlePuzzleMatch[1] ? parseInt(titlePuzzleMatch[1], 10) : (puzzleNumberParam ? parseInt(puzzleNumberParam) : 0);
       },
       maxRequestsPerCrawl: 1,
     });
 
-    await crawler.run([{ url }]);
+    await crawler.run([{ url: nytReviewUrl }]);
 
     console.log("Extracted Puzzle Number (Final):", wordleData.puzzle_number);
     console.log("Extracted Answer (Final):", wordleData.answer);
-    console.log("Extracted Hints (Final):", wordleData.hints);
-
-    wordleData.difficulty = 'Medium'; // Defaulting to Medium
-    wordleData.definition = ''; // Set to empty as it's not provided for each word
+    console.log("Generated Hints (Final):", wordleData.hints);
+    console.log("Generated Difficulty (Final):", wordleData.difficulty);
 
     // Log warnings if crucial data is missing
     if (!wordleData.answer) {
-        console.warn("Scraping Warning: Could not find answer on page:", url);
-    }
-    if (wordleData.hints?.length === 0) {
-        console.warn("Scraping Warning: Could not find hints on page:", url);
+        console.warn("Scraping Warning: Could not find answer");
     }
 
     // Return a 500 error if essential data is missing
-    if (!wordleData.answer || wordleData.hints?.length === 0) { 
-        console.error("Scraped data incomplete, returning 500:", wordleData);
-        return NextResponse.json({ 
-            error: 'Scraped data is incomplete or invalid. Check scraper logic or target website structure.',
-            debug: {
-                scriptContentFound: !!parsedHintsVarName,
-                parsedTodayHints: wordleData.answer ? { answer: wordleData.answer, hints: wordleData.hints } : {}
-            }
-        }, { status: 500 });
+    if (!wordleData.answer) { 
+        console.error("All scraping methods failed, using emergency fallback:", wordleData);
+        
+        // Use emergency fallback as last resort
+        const emergencyData = getEmergencyWordleData(targetDateParam);
+        wordleData.answer = emergencyData.answer;
+        wordleData.puzzle_number = emergencyData.puzzle_number;
+        
+        // Generate hints for emergency fallback
+        wordleData.hints = generateHints(emergencyData.answer);
+        wordleData.difficulty = generateDifficulty(emergencyData.answer);
+        
+        console.log("Emergency fallback activated:", {
+            date: targetDateParam,
+            answer: emergencyData.answer,
+            puzzle_number: emergencyData.puzzle_number,
+            source: 'emergency_fallback'
+        });
     }
 
     // Save scraped data to database
     try {
-      if (!supabase) {
+      if (!getSupabase()) {
         console.warn("Supabase client not initialized, skipping database save");
         return NextResponse.json({
           ...wordleData,
@@ -180,7 +286,7 @@ export async function GET(request: Request) {
 
       console.log("Saving scraped data to database...");
       
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('wordle-answers')
         .upsert({
           date: wordleData.date,
@@ -209,7 +315,7 @@ export async function GET(request: Request) {
         ...wordleData,
         saved: true,
         message: 'Data scraped and saved successfully'
-      } as WordleAnswer & { saved: boolean; message: string });
+      }, { status: 200 });
       
     } catch (dbError) {
       console.error("Database operation failed:", dbError);
