@@ -42,9 +42,11 @@ export async function GET(request: Request) {
       puzzleNumber = basePuzzleNumber + diffDays;
     }
     
-    // Format date for NYT URL (YYYY/MM/DD)
-    const nytDateFormat = targetDateParam.replace(/-/g, '/');
-    const nytReviewUrl = `https://www.nytimes.com/${nytDateFormat}/crosswords/wordle-review-${puzzleNumber}.html`;
+    // NYT review URL uses the previous day's date
+    const reviewDate = new Date(dateObj);
+    reviewDate.setDate(reviewDate.getDate() - 1);
+    const nytReviewDateFormat = `${reviewDate.getFullYear()}/${String(reviewDate.getMonth() + 1).padStart(2, '0')}/${String(reviewDate.getDate()).padStart(2, '0')}`;
+    const nytReviewUrl = `https://www.nytimes.com/${nytReviewDateFormat}/crosswords/wordle-review-${puzzleNumber}.html`;
     
     console.log(`Scraping Wordle answer from NYT review page: ${nytReviewUrl}`);
 
