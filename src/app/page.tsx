@@ -188,6 +188,43 @@ export default async function HomePage() {
           <div className="mt-12 w-full max-w-4xl mx-auto">
             <HowToPlayWordle />
           </div>
+
+          {/* Quick Links Section */}
+          <div className="mt-12 w-full max-w-4xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-center">🔗 Quick Links</CardTitle>
+                <CardDescription className="text-center">
+                  Useful links and resources for Wordle enthusiasts
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Link href="/archive" className="flex flex-col items-center p-4 rounded-lg border hover:bg-gray-50 transition-colors">
+                    <Calendar className="h-6 w-6 mb-2 text-blue-600" />
+                    <span className="text-sm font-medium">Archive</span>
+                  </Link>
+                  <Link href="/sitemap.xml" className="flex flex-col items-center p-4 rounded-lg border hover:bg-gray-50 transition-colors">
+                    <ExternalLink className="h-6 w-6 mb-2 text-green-600" />
+                    <span className="text-sm font-medium">Sitemap</span>
+                  </Link>
+                  <a 
+                    href="https://www.nytimes.com/games/wordle/index.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+                  >
+                    <ExternalLink className="h-6 w-6 mb-2 text-purple-600" />
+                    <span className="text-sm font-medium">Play Wordle</span>
+                  </a>
+                  <Link href="/privacy-policy" className="flex flex-col items-center p-4 rounded-lg border hover:bg-gray-50 transition-colors">
+                    <Info className="h-6 w-6 mb-2 text-gray-600" />
+                    <span className="text-sm font-medium">Privacy</span>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </main>
       </div>
     </ClientBody>

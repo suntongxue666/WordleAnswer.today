@@ -24,9 +24,7 @@ export async function POST(request: Request) {
     // Insert the data
     const { data, error } = await supabaseClient
       .from('wordle-answers')
-      .upsert(wordleData, {
-        onConflict: 'date'
-      })
+      .upsert(wordleData)
       .select();
 
     if (error) {

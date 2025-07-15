@@ -28,6 +28,9 @@ export function Footer() {
               <Link href="/archive" className="block text-sm text-gray-600 hover:text-blue-600 transition-colors">
                 📚 Wordle Archive
               </Link>
+              <Link href="/sitemap.xml" className="block text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                🗺️ Site Map
+              </Link>
               <Link href="/privacy-policy" className="block text-sm text-gray-600 hover:text-blue-600 transition-colors">
                 🔒 Privacy Policy
               </Link>

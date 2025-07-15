@@ -19,6 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Sitemap for SEO */}
+        <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+        
         {/* Google tag (gtag.js) */}
         <Script async src="https://www.googletagmanager.com/gtag/js?id=G-MMGE1750H4" strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
