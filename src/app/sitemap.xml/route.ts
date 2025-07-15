@@ -28,17 +28,9 @@ export async function GET() {
   
   // Add all Wordle pages from database
   allWordles.forEach(wordle => {
-    // Primary URL format (by date)
+    // Only include the date-based URL format that actually exists
     urls.push(`  <url>
     <loc>${baseUrl}/wordle/${wordle.date}</loc>
-    <lastmod>${wordle.date}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>`);
-    
-    // Puzzle number format
-    urls.push(`  <url>
-    <loc>${baseUrl}/puzzle/${wordle.puzzle_number}</loc>
     <lastmod>${wordle.date}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
