@@ -222,3 +222,24 @@ export async function getRecentWordles(days: number = 30): Promise<WordleAnswer[
   console.log(`[getRecentWordles] Fetched ${data.length} recent Wordles. Dates: ${data.map(d => d.date).join(', ')}`);
   return data as WordleAnswer[];
 }
+
+// 获取所有Wordle数据用于sitemap生成
+export async function getAllWordlesForSitemap(): Promise<WordleAnswer[]> {
+  const supabaseClient = supabase;
+  if (!supabaseClient) {
+    console.error('[getAllWordlesForSitemap] Supabase client not available');
+    return [];
+  }
+
+  const { data, error } = await supabaseClient
+    .from('wordle-answers')
+    .select('date, puzzle_number')
+    .order('date', { ascending: true });
+
+  if (error) {
+    console.error('[getAllWordlesForSitemap] Error fetching all Wordles:', error);
+    return [];
+  }
+
+  return data as WordleAnswer[];
+}
