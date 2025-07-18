@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'; // 导入 Supabase 客户端
 import { format } from 'date-fns'; // Add this import
+import { unstable_cache as cache } from 'next/cache'; // 导入 unstable_cache
 
 export interface WordleAnswer {
   id: string;
@@ -46,7 +47,8 @@ export async function fetchWordleData(date: string, puzzleNumber: number): Promi
 }
 
 // 获取今天的 Wordle 数据
-export async function getTodaysWordle(testDate?: string): Promise<WordleAnswer | null> {
+export const getTodaysWordle = cache(
+  async (testDate?: string): Promise<WordleAnswer | null> => {
   const dateToFetch = testDate || format(new Date(), 'yyyy-MM-dd');
   console.log(`[getTodaysWordle] Attempting to fetch Wordle for date: ${dateToFetch}`);
 
@@ -72,10 +74,15 @@ export async function getTodaysWordle(testDate?: string): Promise<WordleAnswer |
   const result = data as WordleAnswer | null;
   console.log(`[getTodaysWordle] Result for ${dateToFetch}: ${result ? `Found (Puzzle: ${result.puzzle_number}, Answer: ${result.answer})` : 'Not Found'}`);
   return result;
-}
+  },
+  ['todays-wordle'], // Cache tag for today's wordle
+  { revalidate: 3600 } // Revalidate every hour (3600 seconds)
+);
+
 
 // 获取最近的 Wordle 答案（根据需求可以按日期排序或限制数量）
-export async function getRecentWordleAnswers(limit: number = 10): Promise<WordleData[]> {
+export const getRecentWordleAnswers = cache(
+  async (limit: number = 10): Promise<WordleData[]> => {
   const supabaseClient = supabase;
   if (!supabaseClient) {
     console.error('[getRecentWordleAnswers] Supabase client not available');
@@ -106,7 +113,10 @@ export async function getRecentWordleAnswers(limit: number = 10): Promise<Wordle
     difficulty: item.difficulty || undefined,
     definition: item.definition || undefined,
   }));
-}
+  },
+  ['recent-wordles'], // Cache tag for recent wordles
+  { revalidate: 3600 } // Revalidate every hour (3600 seconds)
+);
 
 export const nytGames: NYTGame[] = [
   {
@@ -191,7 +201,8 @@ export const getDifficultyColor = (difficulty: string): string => {
   }
 };
 
-export async function getRecentWordles(days: number = 30): Promise<WordleAnswer[]> {
+export const getRecentWordles = cache(
+  async (days: number = 30): Promise<WordleAnswer[]> => {
   const supabaseClient = supabase;
   if (!supabaseClient) {
     console.error('[getRecentWordles] Supabase client not available');
@@ -221,7 +232,10 @@ export async function getRecentWordles(days: number = 30): Promise<WordleAnswer[
   // Log fetched dates to verify
   console.log(`[getRecentWordles] Fetched ${data.length} recent Wordles. Dates: ${data.map(d => d.date).join(', ')}`);
   return data as WordleAnswer[];
-}
+  },
+  ['all-recent-wordles'], // Cache tag for recent wordles
+  { revalidate: 3600 } // Revalidate every hour (3600 seconds)
+);
 
 // 获取所有Wordle数据用于sitemap生成
 export async function getAllWordlesForSitemap(): Promise<WordleAnswer[]> {

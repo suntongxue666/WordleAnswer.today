@@ -4,5 +4,10 @@
       "path": "/api/cron-scrape",
       "schedule": "1 5 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "src/app/api/wordle-scrape/route.ts": {
+      "maxDuration": 15
+    }
+  }
 }
