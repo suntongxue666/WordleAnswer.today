@@ -38,26 +38,22 @@ export async function GET() {
   });
   
   // Add static pages
-  urls.push(`  <url>
-    <loc>${baseUrl}/privacy-policy</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>`);
+  const staticPages = [
+    { path: '/privacy-policy', priority: '0.3', changefreq: 'monthly' },
+    { path: '/terms-of-service', priority: '0.3', changefreq: 'monthly' },
+    { path: '/disclaimer', priority: '0.3', changefreq: 'monthly' },
+    { path: '/sitemap.xml', priority: '0.2', changefreq: 'daily' },
+    { path: '/robots.txt', priority: '0.1', changefreq: 'monthly' }
+  ];
   
-  urls.push(`  <url>
-    <loc>${baseUrl}/terms-of-service</loc>
+  staticPages.forEach(page => {
+    urls.push(`  <url>
+    <loc>${baseUrl}${page.path}</loc>
     <lastmod>${currentDate}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
   </url>`);
-  
-  urls.push(`  <url>
-    <loc>${baseUrl}/disclaimer</loc>
-    <lastmod>${currentDate}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>`);
+  });
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

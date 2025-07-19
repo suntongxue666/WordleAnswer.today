@@ -59,28 +59,28 @@ export default async function HomePage() {
   const formattedYesterdayDate = format(subDays(todaysDate, 1), 'yyyy-MM-dd');
 
   const recentWordles = await getRecentWordles();
-  
+
   // 获取最新可用的数据作为主要显示内容
   let wordleToDisplay: WordleAnswer | null = null;
-  
+
   // 首先尝试今天的数据
   wordleToDisplay = await getTodaysWordle(formattedTodaysDate);
-  
+
   // 如果没有今天的，尝试昨天的
   if (!wordleToDisplay) {
     console.log(`Today's Wordle (${formattedTodaysDate}) not found, trying yesterday's (${formattedYesterdayDate}).`);
     wordleToDisplay = await getTodaysWordle(formattedYesterdayDate);
   }
-  
+
   // 如果今天和昨天都没有，使用最新的历史数据
   if (!wordleToDisplay && recentWordles.length > 0) {
     console.log(`No recent data found, using latest from history.`);
     wordleToDisplay = recentWordles[0];
   }
-  
+
   // Recent Wordle Answers: 显示所有可用数据，包括当前显示的(SEO友好)
   // 如果有主要显示数据，确保它在列表第一位
-  const displayWordles = wordleToDisplay 
+  const displayWordles = wordleToDisplay
     ? [wordleToDisplay, ...recentWordles.filter(wordle => wordle.date !== wordleToDisplay.date)]
     : recentWordles;
 
@@ -89,7 +89,7 @@ export default async function HomePage() {
       <div className="flex flex-col items-center justify-center min-h-screen py-2">
         <main className="flex flex-col items-center justify-center w-full flex-1 px-4 sm:px-20 text-center">
           <div className="flex items-center gap-4 mb-6">
-            <img 
+            <img
               src="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//Wordle%20logo.png"
               alt="Wordle Logo"
               className="h-12 w-auto"
@@ -115,7 +115,7 @@ export default async function HomePage() {
                     </div>
                   </div>
                 )}
-                
+
                 <WordlePuzzle
                   date={wordleToDisplay.date}
                   puzzleNumber={wordleToDisplay.puzzle_number}
@@ -170,7 +170,7 @@ export default async function HomePage() {
               </div>
             )}
           </div>
-          
+
           {/* Wordle Analysis Section - Only show if we have today's data */}
           {wordleToDisplay && (
             <div className="mt-12 w-full max-w-4xl mx-auto">
@@ -183,7 +183,7 @@ export default async function HomePage() {
               />
             </div>
           )}
-          
+
           {/* How to Play Section - Always show */}
           <div className="mt-12 w-full max-w-4xl mx-auto">
             <HowToPlayWordle />
@@ -208,7 +208,7 @@ export default async function HomePage() {
                     <ExternalLink className="h-6 w-6 mb-2 text-green-600" />
                     <span className="text-sm font-medium">Sitemap</span>
                   </Link>
-                  <a 
+                  <a
                     href="https://www.nytimes.com/games/wordle/index.html"
                     target="_blank"
                     rel="noopener noreferrer"
