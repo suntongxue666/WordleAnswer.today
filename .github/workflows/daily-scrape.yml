@@ -1,10 +1,12 @@
 name: Daily Wordle Scraping (Primary + Backup)
 on:
   schedule:
-    # Updated schedule to run after midnight ET (more reliable)
-    - cron: '1 5 * * *'   # NYC: 01:01 EDT - Primary backup (1 minute after Vercel)
-    - cron: '15 5 * * *'  # NYC: 01:15 EDT - Secondary backup
-    - cron: '30 5 * * *'  # NYC: 01:30 EDT - Final backup
+    # Updated schedule to run after NYT publishes at 6:00 AM ET
+    - cron: '1 10 * * *'   # NYC: 06:01 AM ET - First attempt right after NYT publishes
+    - cron: '5 10 * * *'   # NYC: 06:05 AM ET - Quick retry
+    - cron: '30 10 * * *'  # NYC: 06:30 AM ET - Third attempt
+    - cron: '0 11 * * *'   # NYC: 07:00 AM ET - Fourth attempt
+    - cron: '0 12 * * *'   # NYC: 08:00 AM ET - Final backup
   workflow_dispatch: # Allow manual trigger
 
 jobs:
