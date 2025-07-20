@@ -42,3 +42,10 @@ next-env.d.ts
 
 # local environment variables
 .env.local
+
+# 测试和临时脚本
+test-indexing-api.js
+update-env.js
+fix-july20.js
+submit-to-google.js
+refresh-homepage.js
