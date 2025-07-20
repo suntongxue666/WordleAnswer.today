@@ -152,6 +152,17 @@ export async function GET(request: Request) {
           scrapedData: wordleData 
         }, { status: 500 });
       }
+      
+      // 尝试通知 Google 索引新内容
+      try {
+        // 动态导入，避免在服务器启动时加载
+        const { notifyNewWordleAnswer } = await import('@/lib/google-indexing');
+        await notifyNewWordleAnswer(wordleData.date);
+        console.log(`已通知 Google 索引 ${wordleData.date} 的新答案`);
+      } catch (indexError) {
+        // 不阻止主流程，只记录错误
+        console.warn('Google 索引通知失败:', indexError);
+      }
     }
 
     return NextResponse.json({
