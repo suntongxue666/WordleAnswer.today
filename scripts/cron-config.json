@@ -1,0 +1,6 @@
+{
+  "schedule": "0 4 * * *",
+  "description": "每天北京时间中午12:00 (UTC+8 = UTC 4:00) 更新次日的Wordle答案",
+  "script": "scripts/daily-update.js",
+  "timezone": "Asia/Shanghai"
+} 
