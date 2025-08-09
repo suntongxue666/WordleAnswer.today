@@ -94,7 +94,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
     const bodyText = $.text();
     
     // 查找特定的 JSON 数据
-    let jsonMatch = bodyText.match(/ExperimentalBlock_Reveal.*?Today's word is ([A-Z]{5})/i);
+    const jsonMatch = bodyText.match(/ExperimentalBlock_Reveal.*?Today's word is ([A-Z]{5})/i);
     if (jsonMatch && jsonMatch[1]) {
       return { answer: jsonMatch[1].toUpperCase(), source: 'nyt_review_json' };
     }
