@@ -17,7 +17,25 @@ function calculatePuzzleNumber(dateStr: string): number {
   return basePuzzleNumber + diffDays;
 }
 
-// 高效抓取函数 - 并行请求多个源
+// 新的API抓取函数 - 作为首选方法
+async function apiScrape(dateStr: string): Promise<{ answer: string; source: string } | null> {
+  try {
+    const url = `https://www.nytimes.com/svc/wordle/v2/${dateStr}.json`;
+    const response = await axios.get(url, { timeout: 10000 });
+    
+    if (response.status === 200 && response.data.solution) {
+      return { 
+        answer: response.data.solution.toUpperCase(), 
+        source: 'nyt_api' 
+      };
+    }
+  } catch (error) {
+    console.log(`API抓取失败 ${dateStr}:`, error);
+  }
+  return null;
+}
+
+// 高效抓取函数 - 并行请求多个源（作为备用）
 async function efficientScrape(dateStr: string): Promise<{ answer: string; source: string } | null> {
   const puzzleNumber = calculatePuzzleNumber(dateStr);
   const targetDate = new Date(dateStr);
@@ -29,7 +47,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
   const nytReviewUrl = `https://www.nytimes.com/${reviewDate.getFullYear()}/${String(reviewDate.getMonth() + 1).padStart(2, '0')}/${String(reviewDate.getDate()).padStart(2, '0')}/crosswords/wordle-review-${puzzleNumber}.html`;
   
   // 2. AppGamer URL - 新增高优先级来源
-  const month = targetDate.toLocaleString('default', { month: 'long' }).toLowerCase();
+  const month = targetDate.toLocaleString('en-US', { month: 'long' }).toLowerCase();
   const day = targetDate.getDate();
   const year = targetDate.getFullYear();
   const appGamerUrl = `https://www.appgamer.com/wordle-${puzzleNumber}-hints-answer-${month}-${day}-${year}`;
@@ -345,10 +363,16 @@ export async function GET(request: Request) {
   }
 
   try {
-    console.log(`Starting efficient scrape for ${targetDateParam}`);
+    console.log(`Starting scrape for ${targetDateParam}`);
     
-    // 高效抓取
-    const result = await efficientScrape(targetDateParam);
+    // 首先尝试新的API抓取方法（首选）
+    let result = await apiScrape(targetDateParam);
+    
+    // 如果API抓取失败，使用原有的网页抓取方法（备用）
+    if (!result) {
+      console.log('API抓取失败，尝试使用网页抓取方法...');
+      result = await efficientScrape(targetDateParam);
+    }
     
     let wordleData: Partial<WordleAnswer>;
     
@@ -414,8 +438,10 @@ export async function GET(request: Request) {
       try {
         // 动态导入，避免在服务器启动时加载
         const { notifyNewWordleAnswer } = await import('@/lib/google-indexing');
-        await notifyNewWordleAnswer(wordleData.date);
-        console.log(`已通知 Google 索引 ${wordleData.date} 的新答案`);
+        if (wordleData.date) {
+          await notifyNewWordleAnswer(wordleData.date);
+          console.log(`已通知 Google 索引 ${wordleData.date} 的新答案`);
+        }
       } catch (indexError) {
         // 不阻止主流程，只记录错误
         console.warn('Google 索引通知失败:', indexError);
