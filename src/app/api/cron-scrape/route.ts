@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 
 export async function POST(request: Request) {
   // 验证是否来自 Vercel cron
@@ -50,11 +51,48 @@ export async function POST(request: Request) {
   }
 }
 
-// 也支持GET请求用于手动测试
-export async function GET() {
-  return NextResponse.json({ 
-    message: 'Cron endpoint is active. Use POST with authorization header to trigger scraping.',
-    schedule: ['3 4 * * *', '30 4 * * *', '0 5 * * *', '0 7 * * *'],
-    timezone: 'UTC (corresponds to NYC: 00:03, 00:30, 01:00, 03:00 EDT)'
-  });
-}
+export const dynamic = 'force-dynamic';
+
+// 修改cron表达式，每天只运行一次
+export const GET = async () => {
+  // 检查cron secret（安全验证）
+  const authHeader = headers().get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  try {
+    // 获取明天的日期
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
+    console.log(`Cron job: 开始抓取 ${tomorrowStr} 的Wordle答案...`);
+    
+    // 调用NYT API抓取
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/nyt-api-scrape?date=${tomorrowStr}`);
+    const result = await response.json();
+    
+    if (result.saved) {
+      console.log(`✅ Cron job: ${tomorrowStr} 答案已成功保存`);
+      return NextResponse.json({ 
+        success: true, 
+        message: `${tomorrowStr} 答案已更新`,
+        date: tomorrowStr 
+      });
+    } else {
+      console.error(`❌ Cron job: ${tomorrowStr} 答案保存失败:`, result.error);
+      return NextResponse.json({ 
+        success: false, 
+        error: result.error 
+      }, { status: 500 });
+    }
+    
+  } catch (error) {
+    console.error('Cron job error:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }, { status: 500 });
+  }
+};
