@@ -3,6 +3,7 @@ import { WordleAnswer } from '@/lib/wordle-data';
 import { getSupabase } from '@/lib/supabase';
 import { generateHints, generateDifficulty } from '@/lib/hint-generator';
 import axios from 'axios';
+import { revalidateTag } from 'next/cache'; // 导入 revalidateTag
 
 // 计算puzzle number
 function calculatePuzzleNumber(dateStr: string): number {
@@ -91,6 +92,11 @@ export async function GET(request: Request) {
         }, { status: 500 });
       }
       
+      // 添加重新验证缓存的逻辑
+      revalidateTag('todays-wordle'); // 重新验证 getTodaysWordle 的缓存
+      revalidateTag('recent-wordles'); // 重新验证 getRecentWordles 的缓存 (用于首页)
+      revalidateTag('all-recent-wordles'); // 重新验证 getRecentWordles (如果你有其他地方用到了这个标签)
+
       // 尝试通知 Google 索引新内容
       try {
         const { notifyNewWordleAnswer } = await import('@/lib/google-indexing');
