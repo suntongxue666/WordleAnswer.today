@@ -40,7 +40,9 @@ import { generateSEOMetadata } from '@/lib/seo-utils';
 import type { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const todaysDate = new Date();
+  // 使用服务器端安全的方式获取日期
+  const now = Date.now();
+  const todaysDate = new Date(now);
   const formattedTodaysDate = format(todaysDate, 'yyyy-MM-dd');
   const formattedYesterdayDate = format(subDays(todaysDate, 1), 'yyyy-MM-dd');
 
@@ -54,7 +56,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const todaysDate = new Date();
+  // 使用服务器端安全的方式获取日期
+  const now = Date.now();
+  const todaysDate = new Date(now);
   const formattedTodaysDate = format(todaysDate, 'yyyy-MM-dd');
   const formattedYesterdayDate = format(subDays(todaysDate, 1), 'yyyy-MM-dd');
 
@@ -78,11 +82,12 @@ export default async function HomePage() {
     wordleToDisplay = recentWordles[0];
   }
 
-  // Recent Wordle Answers: 显示所有可用数据，包括当前显示的(SEO友好)
-  // 如果有主要显示数据，确保它在列表第一位
-  const displayWordles = wordleToDisplay
-    ? [wordleToDisplay, ...recentWordles.filter(wordle => wordle.date !== wordleToDisplay.date)]
-    : recentWordles;
+  // Recent Wordle Answers: 只显示8月13日及之前的数据
+  // 过滤掉8月14日的数据
+  const displayWordles = recentWordles.filter(wordle => {
+    // 过滤掉8月14日及之后的数据
+    return wordle.date <= '2025-08-13';
+  });
 
   return (
     <ClientBody>
@@ -109,7 +114,7 @@ export default async function HomePage() {
                     <div className="flex items-center justify-center gap-2 text-blue-700">
                       <Calendar className="h-4 w-4" />
                       <span className="text-sm font-medium">
-                        Showing latest available: {format(new Date(wordleToDisplay.date), 'MMMM d, yyyy')}
+                        Showing latest available: {wordleToDisplay.date}
                         {wordleToDisplay.date === formattedYesterdayDate ? ' (Yesterday)' : ''}
                       </span>
                     </div>

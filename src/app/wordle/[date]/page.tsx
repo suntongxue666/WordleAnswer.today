@@ -76,7 +76,7 @@ export default async function WordleDatePage({ params }: PageProps) {
   const currentDate = parseISO(date);
   const previousDate = subDays(currentDate, 1);
   const nextDate = addDays(currentDate, 1);
-  const today = new Date();
+  const today = new Date(Date.now());
   
   // Format dates for navigation
   const formattedCurrentDate = format(currentDate, 'MMMM d');

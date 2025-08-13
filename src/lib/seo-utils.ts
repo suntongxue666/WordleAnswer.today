@@ -4,7 +4,7 @@ import { WordleAnswer } from '@/lib/wordle-data';
 // 生成动态SEO元数据
 export function generateSEOMetadata(wordleData: WordleAnswer | null) {
   // 使用抓取到的数据日期，而不是当前日期
-  const dataDate = wordleData?.date ? parseISO(wordleData.date) : new Date();
+  const dataDate = wordleData?.date ? parseISO(wordleData.date) : new Date(Date.now());
   const dataDateFormatted = format(dataDate, 'MMMM d'); // "July 10"
   const dayOfWeek = format(dataDate, 'EEEE'); // "Thursday"
   const fullDate = format(dataDate, 'MMMM d, yyyy'); // "July 10, 2025"

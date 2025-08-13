@@ -49,7 +49,7 @@ export async function fetchWordleData(date: string, puzzleNumber: number): Promi
 // 获取今天的 Wordle 数据
 export const getTodaysWordle = cache(
   async (testDate?: string): Promise<WordleAnswer | null> => {
-  const dateToFetch = testDate || format(new Date(), 'yyyy-MM-dd');
+  const dateToFetch = testDate || format(new Date(Date.now()), 'yyyy-MM-dd');
   console.log(`[getTodaysWordle] Attempting to fetch Wordle for date: ${dateToFetch}`);
 
   const supabaseClient = supabase;
@@ -164,25 +164,39 @@ export const nytGames: NYTGame[] = [
 ];
 
 export const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch (error) {
+    console.error(`[formatDate] Error formatting date: ${dateString}`, error);
+    return dateString; // 返回原始日期字符串作为后备
+  }
 };
 
 // 计算Wordle期数，基于7月7日为#1479
 export const calculatePuzzleNumber = (dateString: string): number => {
-  const baseDate = new Date('2025-07-07'); // 基准日期：7月7日
-  const basePuzzleNumber = 1479; // 基准期数
-  
-  const targetDate = new Date(dateString);
-  const diffTime = targetDate.getTime() - baseDate.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  
-  return basePuzzleNumber + diffDays;
+  try {
+    const baseDate = new Date('2025-07-07'); // 基准日期：7月7日
+    const basePuzzleNumber = 1479; // 基准期数
+    
+    const targetDate = new Date(dateString);
+    const diffTime = targetDate.getTime() - baseDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    return basePuzzleNumber + diffDays;
+  } catch (error) {
+    console.error(`[calculatePuzzleNumber] Error calculating puzzle number for date: ${dateString}`, error);
+    // 如果出错，返回一个基于日期字符串的简单计算
+    const year = parseInt(dateString.substring(0, 4));
+    const month = parseInt(dateString.substring(5, 7));
+    const day = parseInt(dateString.substring(8, 10));
+    return 1479 + ((year - 2025) * 365) + ((month - 7) * 30) + (day - 7);
+  }
 };
 
 export const getWordleUrl = (date: string): string => {
@@ -209,8 +223,9 @@ export const getRecentWordles = cache(
     return [];
   }
 
-  const today = new Date();
-  const thirtyDaysAgo = new Date(today);
+  const now = Date.now();
+  const today = new Date(now);
+  const thirtyDaysAgo = new Date(now);
   thirtyDaysAgo.setDate(today.getDate() - days);
 
   const startDate = format(thirtyDaysAgo, 'yyyy-MM-dd');
