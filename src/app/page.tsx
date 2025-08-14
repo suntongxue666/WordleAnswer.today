@@ -83,8 +83,11 @@ export default async function HomePage() {
     wordleToDisplay = recentWordles[0];
   }
 
-  // Recent Wordle Answers: 显示所有可用的数据，包括今天的
-  const displayWordles = recentWordles;
+  // Recent Wordle Answers: 确保今天的数据显示在第一位
+  const todaysWordle = await getTodaysWordle(formattedTodaysDate);
+  const displayWordles = todaysWordle 
+    ? [todaysWordle, ...recentWordles.filter(w => w.date !== formattedTodaysDate)]
+    : recentWordles;
 
   return (
     <ClientBody>
