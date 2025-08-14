@@ -40,10 +40,6 @@ import { format, subDays, parseISO } from 'date-fns';
 import { generateSEOMetadata } from '@/lib/seo-utils';
 import type { Metadata } from 'next';
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 export async function generateMetadata(): Promise<Metadata> {
   // 使用服务器端安全的方式获取日期
   const now = Date.now();
@@ -89,16 +85,9 @@ export default async function HomePage() {
 
   // Recent Wordle Answers: 确保今天的数据显示在第一位
   const todaysWordle = await getTodaysWordle(formattedTodaysDate);
-  console.log('Debug - todaysWordle:', todaysWordle);
-  console.log('Debug - recentWordles count:', recentWordles.length);
-  console.log('Debug - recentWordles first 3 dates:', recentWordles.slice(0, 3).map(w => w.date));
-  
-  const displayWordles = todaysWordle 
+  const displayWordles = todaysWordle
     ? [todaysWordle, ...recentWordles.filter(w => w.date !== formattedTodaysDate)]
     : recentWordles;
-    
-  console.log('Debug - displayWordles count:', displayWordles.length);
-  console.log('Debug - displayWordles first 3 dates:', displayWordles.slice(0, 3).map(w => w.date));
 
   return (
     <ClientBody>
@@ -174,15 +163,7 @@ export default async function HomePage() {
             )}
 
             <h2 className="text-2xl font-bold mb-4 text-left mt-8">Recent Wordle Answers</h2>
-            {/* Debug info - remove after testing */}
-            <div className="mb-4 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
-              <div>Debug Info:</div>
-              <div>- Today's date: {formattedTodaysDate}</div>
-              <div>- Total wordles: {displayWordles.length}</div>
-              <div>- First 5 dates: {displayWordles.slice(0, 5).map(w => w.date).join(', ')}</div>
-              <div>- Grid classes: grid-cols-1 sm:grid-cols-3 lg:grid-cols-5</div>
-              <div>- Slice: showing first 15 items</div>
-            </div>
+
             {displayWordles.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
