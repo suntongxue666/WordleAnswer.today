@@ -163,6 +163,10 @@ export default async function HomePage() {
             )}
 
             <h2 className="text-2xl font-bold mb-4 text-left mt-8">Recent Wordle Answers</h2>
+            {/* Debug info - remove after testing */}
+            <div className="mb-4 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
+              Debug: Showing {displayWordles.length} wordles, first date: {displayWordles[0]?.date || 'none'}
+            </div>
             {displayWordles.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
