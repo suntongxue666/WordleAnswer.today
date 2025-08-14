@@ -12,3 +12,58 @@
 发送到Supabase的数据: {"date":"2025-08-10","puzzle_number":1513,"answer":"MINTY","hints":[],"difficulty":"medium","definition":""}
 ✅ 2025-08-10 的答案已成功保存到Supabase数据库
  网站已更新，用户可以访问 2025-08-10 的答案了！
+开始更新 2025-08-14 的Wordle答案...
+请求出错： AggregateError [ETIMEDOUT]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7) {
+  code: 'ETIMEDOUT',
+  [errors]: [
+    Error: connect ETIMEDOUT 2a03:2880:f10c:83:face:b00c:0:25de:443
+        at createConnectionError (node:net:1678:14)
+        at Timeout.internalConnectMultipleTimeout (node:net:1737:38)
+        at listOnTimeout (node:internal/timers:590:11)
+        at process.processTimers (node:internal/timers:523:7) {
+      errno: -60,
+      code: 'ETIMEDOUT',
+      syscall: 'connect',
+      address: '2a03:2880:f10c:83:face:b00c:0:25de',
+      port: 443
+    },
+    Error: connect ETIMEDOUT 199.59.148.89:443
+        at createConnectionError (node:net:1678:14)
+        at afterConnectMultiple (node:net:1708:16) {
+      errno: -60,
+      code: 'ETIMEDOUT',
+      syscall: 'connect',
+      address: '199.59.148.89',
+      port: 443
+    }
+  ]
+}
+程序执行出错： AggregateError [ETIMEDOUT]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7) {
+  code: 'ETIMEDOUT',
+  [errors]: [
+    Error: connect ETIMEDOUT 2a03:2880:f10c:83:face:b00c:0:25de:443
+        at createConnectionError (node:net:1678:14)
+        at Timeout.internalConnectMultipleTimeout (node:net:1737:38)
+        at listOnTimeout (node:internal/timers:590:11)
+        at process.processTimers (node:internal/timers:523:7) {
+      errno: -60,
+      code: 'ETIMEDOUT',
+      syscall: 'connect',
+      address: '2a03:2880:f10c:83:face:b00c:0:25de',
+      port: 443
+    },
+    Error: connect ETIMEDOUT 199.59.148.89:443
+        at createConnectionError (node:net:1678:14)
+        at afterConnectMultiple (node:net:1708:16) {
+      errno: -60,
+      code: 'ETIMEDOUT',
+      syscall: 'connect',
+      address: '199.59.148.89',
+      port: 443
+    }
+  ]
+}

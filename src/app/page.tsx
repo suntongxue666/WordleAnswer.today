@@ -28,6 +28,7 @@ import {
 import {
   getTodaysWordle,
   getRecentWordles,
+  calculatePuzzleNumber,
   type WordleAnswer
 } from '@/lib/wordle-data';
 import ClientBody from '@/app/ClientBody';
@@ -82,12 +83,8 @@ export default async function HomePage() {
     wordleToDisplay = recentWordles[0];
   }
 
-  // Recent Wordle Answers: 只显示8月13日及之前的数据
-  // 过滤掉8月14日的数据
-  const displayWordles = recentWordles.filter(wordle => {
-    // 过滤掉8月14日及之后的数据
-    return wordle.date <= '2025-08-13';
-  });
+  // Recent Wordle Answers: 显示所有可用的数据，包括今天的
+  const displayWordles = recentWordles;
 
   return (
     <ClientBody>
@@ -104,8 +101,28 @@ export default async function HomePage() {
             </h1>
           </div>
 
-          {/* Always show the latest available Wordle data */}
+          {/* Today's Wordle Answer Card */}
           <div className="mt-8 w-full max-w-lg md:max-w-4xl mx-auto">
+            <Card className="mb-8 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-bold text-green-700">
+                  Today's Wordle Answer/Hint - Wordle {format(todaysDate, 'MMMM d')}
+                </CardTitle>
+                <CardDescription className="text-lg text-gray-600">
+                  Get today's Wordle answer and hints instantly
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <Link href={`/wordle/${formattedTodaysDate}`} passHref>
+                  <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg">
+                    <Lightbulb className="mr-2 h-5 w-5" />
+                    View Today's Answer & Hints
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Always show the latest available Wordle data */}
             {wordleToDisplay ? (
               <>
                 {/* Date indicator if not today's data */}
@@ -145,8 +162,10 @@ export default async function HomePage() {
             <h2 className="text-2xl font-bold mb-4 text-left mt-8">Recent Wordle Answers</h2>
             {displayWordles.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {/* Show 15 recent Wordle cards (3 rows x 5 columns) */}
                   {displayWordles
+                    .slice(0, 15) // 显示最近的15个
                     .map((wordle) => (
                       <RecentWordleCard
                         key={wordle.id}
