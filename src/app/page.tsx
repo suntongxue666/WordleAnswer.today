@@ -112,12 +112,6 @@ export default async function HomePage() {
   }
 
   // Recent Wordle Answers: 使用与WordlePuzzle相同的数据源
-  console.log('=== DEBUG INFO ===');
-  console.log('Current date:', formattedTodaysDate);
-  console.log('wordleToDisplay date:', wordleToDisplay?.date);
-  console.log('Direct DB wordles count:', recentWordles.length);
-  console.log('Direct DB first 5 dates:', recentWordles.slice(0, 5).map(w => w.date).join(' '));
-  console.log('==================');
 
   // 确保Recent Wordle Answers显示最新数据，按日期倒序排列
   // 获取当前上海时间
@@ -159,12 +153,12 @@ export default async function HomePage() {
           {/* Today's Wordle Answer Card */}
 
           <div className="mt-8 w-full max-w-lg md:max-w-4xl mx-auto">
-            <div className="mb-8 bg-gradient-to-r from-green-50/80 to-blue-50/80 border-2 border-green-200 rounded-xl p-6">
+            <div className="mb-8 bg-gradient-to-r from-green-50/80 to-blue-50/80 border-2 border-green-200 rounded-xl p-6 shadow-md">
               <div className="text-center mb-4">
                 <h2 className="text-2xl font-bold text-green-700">
                   Today's Wordle Answer/Hint - Wordle {format(todaysDate, 'MMMM d')}
                 </h2>
-                <p className="text-lg text-gray-600 mt-2">
+                <p className="text-lg text-green-600 mt-2 font-medium">
                   Wordle Puzzle #{wordleToDisplay?.puzzle_number || "Loading..."}
                 </p>
               </div>
@@ -218,26 +212,13 @@ export default async function HomePage() {
               </div>
             )}
 
-            <h2 className="text-2xl font-bold mb-4 text-left mt-8">Recent Wordle Answers</h2>
+            <h2 className="text-2xl font-bold mb-4 text-left mt-8 text-green-700 border-b-2 border-green-200 pb-2">Recent Wordle Answers</h2>
 
 
-            {/* Client-side debug script */}
-            <script dangerouslySetInnerHTML={{
-              __html: `
-                console.log('=== CLIENT DEBUG INFO ===');
-                console.log('Current URL:', window.location.href);
-                console.log('Page loaded from: src/app/page.tsx');
-                console.log('Today date: ${formattedTodaysDate}');
-                console.log('Total wordles: ${displayWordles.length}');
-                console.log('All dates: ${displayWordles.map(w => w.date).join(' ')}');
-                console.log('First wordle date: ${displayWordles[0]?.date || 'none'}');
-                console.log('========================');
-              `
-            }} />
 
             {displayWordles.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {/* Show 15 recent Wordle cards (最近15天的数据) */}
                   {displayWordles
                     .slice(0, 15) // 显示最近的15天
@@ -292,7 +273,7 @@ export default async function HomePage() {
           <div className="mt-12 w-full max-w-4xl mx-auto">
             <Card>
               <CardHeader>
-                <CardTitle className="text-center">�� Quick Links</CardTitle>
+                <CardTitle className="text-center">🔗 Quick Links</CardTitle>
                 <CardDescription className="text-center">
                   Useful links and resources for Wordle enthusiasts
                 </CardDescription>
