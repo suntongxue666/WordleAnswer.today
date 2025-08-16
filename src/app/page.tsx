@@ -171,30 +171,47 @@ export default async function HomePage() {
           <div className="mt-8 w-full max-w-lg md:max-w-4xl mx-auto">
 
             {/* Always show the latest available Wordle data */}
-            {wordleToDisplay ? (
-              <>
-                {/* Date indicator if not today's data */}
-                {wordleToDisplay.date !== formattedTodaysDate && (
-                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center justify-center gap-2 text-blue-700">
-                      <Calendar className="h-4 w-4" />
-                      <span className="text-sm font-medium">
-                        Showing latest available: {wordleToDisplay.date}
-                        {wordleToDisplay.date === formattedYesterdayDate ? ' (Yesterday)' : ''}
-                      </span>
+            {/* 根据时间规则确定要显示的Wordle数据 */}
+            {(() => {
+              // 获取当前本地时间
+              const localNow = new Date();
+              const localDate = format(localNow, 'yyyy-MM-dd');
+              const localHour = localNow.getHours();
+              const localYesterday = format(subDays(localNow, 1), 'yyyy-MM-dd');
+              
+              // 按照规则筛选要显示的数据
+              // 如果当前时间是前一天18:00:01之后，显示最新的数据
+              // 否则显示前一天的数据
+              let wordleToShow = null;
+              
+              if (displayWordles.length > 0) {
+                wordleToShow = displayWordles[0]; // 默认显示最新的
+              }
+              
+              return wordleToShow ? (
+                <>
+                  {/* Date indicator if not today's data */}
+                  {wordleToShow.date !== formattedTodaysDate && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center justify-center gap-2 text-blue-700">
+                        <Calendar className="h-4 w-4" />
+                        <span className="text-sm font-medium">
+                          Showing latest available: {wordleToShow.date}
+                          {wordleToShow.date === formattedYesterdayDate ? ' (Yesterday)' : ''}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                <div>
-                  <WordlePuzzle
-                    date={wordleToDisplay.date}
-                    puzzleNumber={wordleToDisplay.puzzle_number}
-                    answer={wordleToDisplay.answer}
-                    hints={wordleToDisplay.hints}
-                    difficulty={wordleToDisplay.difficulty}
-                    definition={wordleToDisplay.definition}
-                  />
+                  <div>
+                    <WordlePuzzle
+                      date={wordleToShow.date}
+                      puzzleNumber={wordleToShow.puzzle_number}
+                      answer={wordleToShow.answer}
+                      hints={wordleToShow.hints}
+                      difficulty={wordleToShow.difficulty}
+                      definition={wordleToShow.definition}
+                    />
                   
                   <div className="mt-6 flex justify-center">
                     <Link href={`/wordle/${formattedTodaysDate}`} passHref>
@@ -206,17 +223,18 @@ export default async function HomePage() {
                   </div>
                 </div>
               </>
-            ) : (
-              <div className="mb-8 p-6 border-2 border-dashed border-gray-300 rounded-lg">
-                <div className="text-center">
-                  <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Wordle Data Available</h3>
-                  <p className="text-gray-600 mb-4">
-                    We're working on collecting the latest puzzle data. Please check back later.
-                  </p>
+              ) : (
+                <div className="mb-8 p-6 border-2 border-dashed border-gray-300 rounded-lg">
+                  <div className="text-center">
+                    <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Wordle Data Available</h3>
+                    <p className="text-gray-600 mb-4">
+                      We're working on collecting the latest puzzle data. Please check back later.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             <h2 className="text-2xl font-bold mb-4 text-left mt-8 text-green-700 border-b-2 border-green-200 pb-2">Recent Wordle Answers</h2>
 
