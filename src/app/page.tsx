@@ -153,16 +153,6 @@ export default async function HomePage() {
           {/* Today's Wordle Answer Card */}
 
           <div className="mt-8 w-full max-w-lg md:max-w-4xl mx-auto">
-            <div className="mb-8 bg-gradient-to-r from-green-50/80 to-blue-50/80 border-2 border-green-200 rounded-xl p-6 shadow-md">
-              <div className="text-center mb-4">
-                <h2 className="text-2xl font-bold text-green-700">
-                  Today's Wordle Answer/Hint - Wordle {format(todaysDate, 'MMMM d')}
-                </h2>
-                <p className="text-lg text-green-600 mt-2 font-medium">
-                  Wordle Puzzle #{wordleToDisplay?.puzzle_number || "Loading..."}
-                </p>
-              </div>
-            </div>
 
             {/* Always show the latest available Wordle data */}
             {wordleToDisplay ? (
