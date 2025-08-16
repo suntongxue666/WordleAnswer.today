@@ -31,6 +31,7 @@ import {
   calculatePuzzleNumber,
   type WordleAnswer
 } from '@/lib/wordle-data';
+import { supabase } from '@/lib/supabase';
 import ClientBody from '@/app/ClientBody';
 import { WordlePuzzle } from '@/components/WordlePuzzle';
 import { RecentWordleCard } from '@/components/RecentWordleCard';
@@ -63,7 +64,30 @@ export default async function HomePage() {
   const formattedTodaysDate = format(todaysDate, 'yyyy-MM-dd');
   const formattedYesterdayDate = format(subDays(todaysDate, 1), 'yyyy-MM-dd');
 
-  const recentWordles = await getRecentWordles(15); // 获取最近15天的数据
+  // 直接从数据库获取最新数据，绕过缓存
+  const getLatestWordles = async () => {
+    const supabaseClient = supabase;
+    if (!supabaseClient) {
+      console.error('Supabase client not available');
+      return [];
+    }
+
+    const { data, error } = await supabaseClient
+      .from('wordle-answers')
+      .select('*')
+      .order('date', { ascending: false })
+      .limit(15);
+
+    if (error) {
+      console.error('Error fetching latest wordles:', error);
+      return [];
+    }
+
+    console.log('Direct DB fetch - Latest wordles:', data?.map(d => d.date).join(', '));
+    return data as WordleAnswer[] || [];
+  };
+
+  const recentWordles = await getLatestWordles();
 
   // 获取最新可用的数据作为主要显示内容
   let wordleToDisplay: WordleAnswer | null = null;
@@ -84,8 +108,12 @@ export default async function HomePage() {
   }
 
   // Recent Wordle Answers: 直接使用最新的数据，按日期降序排列
-  console.log('Debug - recentWordles count:', recentWordles.length);
-  console.log('Debug - recentWordles first 5 dates:', recentWordles.slice(0, 5).map(w => w.date));
+  console.log('=== DEBUG INFO ===');
+  console.log('Current date:', formattedTodaysDate);
+  console.log('Recent wordles count:', recentWordles.length);
+  console.log('All dates:', recentWordles.map(w => w.date).join(', '));
+  console.log('First wordle date:', recentWordles[0]?.date);
+  console.log('==================');
 
   const displayWordles = recentWordles; // 直接使用，因为getRecentWordles已经按日期降序排列
 
