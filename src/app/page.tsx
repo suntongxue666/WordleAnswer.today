@@ -135,15 +135,11 @@ export default async function HomePage() {
               className="h-12 w-auto"
             />
             <h1 className="text-2xl sm:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
-              Wordle Answer Today - UPDATED {new Date().toISOString()}
+              Wordle Answer Today
             </h1>
           </div>
 
           {/* Today's Wordle Answer Card */}
-          {/* 🚀 CODE UPDATE TEST - If you see this the code is working */}
-          <div style={{backgroundColor: 'red', color: 'white', padding: '10px', textAlign: 'center', marginBottom: '20px'}}>
-            🚀 CODE UPDATED - {new Date().toISOString()} - If you see this our modifications are working!
-          </div>
 
           <div className="mt-8 w-full max-w-lg md:max-w-4xl mx-auto">
             <Card className="mb-8 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200">
@@ -204,15 +200,6 @@ export default async function HomePage() {
 
             <h2 className="text-2xl font-bold mb-4 text-left mt-8">Recent Wordle Answers</h2>
 
-            {/* Debug info - remove after testing */}
-            <div className="mb-4 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
-              <div>🔍 Debug Info (Today: {formattedTodaysDate}):</div>
-              <div>📊 Total wordles: {displayWordles.length} (最近15天)</div>
-              <div>📅 All dates: {displayWordles.map(w => w.date).join(' ')}</div>
-              <div>🎯 Expected: Today's date ({formattedTodaysDate}) should be first if available</div>
-              <div>🔧 Grid: 5 columns on large screens</div>
-              <div>🚀 File: src/app/page.tsx is being used (not public/index.html)</div>
-            </div>
 
             {/* Client-side debug script */}
             <script dangerouslySetInnerHTML={{
@@ -230,7 +217,7 @@ export default async function HomePage() {
 
             {displayWordles.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {/* Show 15 recent Wordle cards (最近15天的数据) */}
                   {displayWordles
                     .slice(0, 15) // 显示最近的15天
