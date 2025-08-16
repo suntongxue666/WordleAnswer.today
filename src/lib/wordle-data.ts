@@ -76,7 +76,7 @@ export const getTodaysWordle = cache(
   return result;
   },
   ['todays-wordle'], // Cache tag for today's wordle
-  { revalidate: 3600 } // Revalidate every hour (3600 seconds)
+  { revalidate: 3600 } // Revalidate every hour
 );
 
 
@@ -249,7 +249,7 @@ export const getRecentWordles = cache(
   return data as WordleAnswer[];
   },
   ['all-recent-wordles'], // Cache tag for recent wordles
-  { revalidate: 3600 } // Revalidate every hour (3600 seconds)
+  { revalidate: 60 } // Revalidate every minute for testing
 );
 
 // 获取所有Wordle数据用于sitemap生成

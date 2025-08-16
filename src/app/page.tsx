@@ -28,16 +28,22 @@ import {
 import {
   getTodaysWordle,
   getRecentWordles,
+  calculatePuzzleNumber,
   type WordleAnswer
 } from '@/lib/wordle-data';
+import { supabase } from '@/lib/supabase';
 import ClientBody from '@/app/ClientBody';
 import { WordlePuzzle } from '@/components/WordlePuzzle';
 import { RecentWordleCard } from '@/components/RecentWordleCard';
 import { WordleAnalysis } from '@/components/WordleAnalysis';
 import { HowToPlayWordle } from '@/components/HowToPlayWordle';
-import { format, subDays } from 'date-fns';
+import { format, subDays, parseISO } from 'date-fns';
 import { generateSEOMetadata } from '@/lib/seo-utils';
 import type { Metadata } from 'next';
+
+// Force dynamic rendering - 强制动态渲染，不使用缓存
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function generateMetadata(): Promise<Metadata> {
   // 使用服务器端安全的方式获取日期
@@ -46,7 +52,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const formattedTodaysDate = format(todaysDate, 'yyyy-MM-dd');
   const formattedYesterdayDate = format(subDays(todaysDate, 1), 'yyyy-MM-dd');
 
-  // Try to get today's data first, then yesterday's for metadata
+  // Try to get today's data first then yesterday's for metadata
   let wordleToDisplay = await getTodaysWordle(formattedTodaysDate);
   if (!wordleToDisplay) {
     wordleToDisplay = await getTodaysWordle(formattedYesterdayDate);
@@ -62,7 +68,30 @@ export default async function HomePage() {
   const formattedTodaysDate = format(todaysDate, 'yyyy-MM-dd');
   const formattedYesterdayDate = format(subDays(todaysDate, 1), 'yyyy-MM-dd');
 
-  const recentWordles = await getRecentWordles();
+  // 直接从数据库获取最新数据，绕过缓存
+  const getLatestWordles = async () => {
+    const supabaseClient = supabase;
+    if (!supabaseClient) {
+      console.error('Supabase client not available');
+      return [];
+    }
+
+    const { data, error } = await supabaseClient
+      .from('wordle-answers')
+      .select('*')
+      .order('date', { ascending: false })
+      .limit(15);
+
+    if (error) {
+      console.error('Error fetching latest wordles:', error);
+      return [];
+    }
+
+    console.log('Direct DB fetch - Latest wordles:', data?.map(d => d.date).join(' '));
+    return data as WordleAnswer[] || [];
+  };
+
+  const recentWordles = await getLatestWordles();
 
   // 获取最新可用的数据作为主要显示内容
   let wordleToDisplay: WordleAnswer | null = null;
@@ -82,30 +111,61 @@ export default async function HomePage() {
     wordleToDisplay = recentWordles[0];
   }
 
-  // Recent Wordle Answers: 只显示8月13日及之前的数据
-  // 过滤掉8月14日的数据
-  const displayWordles = recentWordles.filter(wordle => {
-    // 过滤掉8月14日及之后的数据
-    return wordle.date <= '2025-08-13';
-  });
+  // Recent Wordle Answers: 使用与WordlePuzzle相同的数据源
+  console.log('=== DEBUG INFO ===');
+  console.log('Current date:', formattedTodaysDate);
+  console.log('wordleToDisplay date:', wordleToDisplay?.date);
+  console.log('Direct DB wordles count:', recentWordles.length);
+  console.log('Direct DB first 5 dates:', recentWordles.slice(0, 5).map(w => w.date).join(' '));
+  console.log('==================');
+
+  // 确保Recent Wordle Answers显示最新数据，如果有wordleToDisplay就把它放在第一位
+  const displayWordles = wordleToDisplay
+    ? [wordleToDisplay, ...recentWordles.filter(w => w.date !== wordleToDisplay.date)].slice(0, 15)
+    : recentWordles.slice(0, 15);
 
   return (
     <ClientBody>
       <div className="flex flex-col items-center justify-center min-h-screen py-2">
         <main className="flex flex-col items-center justify-center w-full flex-1 px-4 sm:px-20 text-center">
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 mb-0 sm:mb-6">
             <img
               src="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//Wordle%20logo.png"
               alt="Wordle Logo"
               className="h-12 w-auto"
             />
-            <h1 className="text-4xl sm:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
-              Wordle Answer Today
+            <h1 className="text-2xl sm:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
+              Wordle Answer Today - UPDATED {new Date().toISOString()}
             </h1>
           </div>
 
-          {/* Always show the latest available Wordle data */}
+          {/* Today's Wordle Answer Card */}
+          {/* 🚀 CODE UPDATE TEST - If you see this the code is working */}
+          <div style={{backgroundColor: 'red', color: 'white', padding: '10px', textAlign: 'center', marginBottom: '20px'}}>
+            🚀 CODE UPDATED - {new Date().toISOString()} - If you see this our modifications are working!
+          </div>
+
           <div className="mt-8 w-full max-w-lg md:max-w-4xl mx-auto">
+            <Card className="mb-8 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-bold text-green-700">
+                  Today's Wordle Answer/Hint - Wordle {format(todaysDate, 'MMMM d')}
+                </CardTitle>
+                <CardDescription className="text-lg text-gray-600">
+                  Get today's Wordle answer and hints instantly
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <Link href={`/wordle/${formattedTodaysDate}`} passHref>
+                  <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg">
+                    <Lightbulb className="mr-2 h-5 w-5" />
+                    View Today's Answer & Hints
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Always show the latest available Wordle data */}
             {wordleToDisplay ? (
               <>
                 {/* Date indicator if not today's data */}
@@ -143,10 +203,37 @@ export default async function HomePage() {
             )}
 
             <h2 className="text-2xl font-bold mb-4 text-left mt-8">Recent Wordle Answers</h2>
+
+            {/* Debug info - remove after testing */}
+            <div className="mb-4 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
+              <div>🔍 Debug Info (Today: {formattedTodaysDate}):</div>
+              <div>📊 Total wordles: {displayWordles.length} (最近15天)</div>
+              <div>📅 All dates: {displayWordles.map(w => w.date).join(' ')}</div>
+              <div>🎯 Expected: Today's date ({formattedTodaysDate}) should be first if available</div>
+              <div>🔧 Grid: 5 columns on large screens</div>
+              <div>🚀 File: src/app/page.tsx is being used (not public/index.html)</div>
+            </div>
+
+            {/* Client-side debug script */}
+            <script dangerouslySetInnerHTML={{
+              __html: `
+                console.log('=== CLIENT DEBUG INFO ===');
+                console.log('Current URL:', window.location.href);
+                console.log('Page loaded from: src/app/page.tsx');
+                console.log('Today date: ${formattedTodaysDate}');
+                console.log('Total wordles: ${displayWordles.length}');
+                console.log('All dates: ${displayWordles.map(w => w.date).join(' ')}');
+                console.log('First wordle date: ${displayWordles[0]?.date || 'none'}');
+                console.log('========================');
+              `
+            }} />
+
             {displayWordles.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {/* Show 15 recent Wordle cards (最近15天的数据) */}
                   {displayWordles
+                    .slice(0, 15) // 显示最近的15天
                     .map((wordle) => (
                       <RecentWordleCard
                         key={wordle.id}
@@ -198,7 +285,7 @@ export default async function HomePage() {
           <div className="mt-12 w-full max-w-4xl mx-auto">
             <Card>
               <CardHeader>
-                <CardTitle className="text-center">🔗 Quick Links</CardTitle>
+                <CardTitle className="text-center">�� Quick Links</CardTitle>
                 <CardDescription className="text-center">
                   Useful links and resources for Wordle enthusiasts
                 </CardDescription>
