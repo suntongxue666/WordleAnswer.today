@@ -111,15 +111,18 @@ export default async function HomePage() {
     wordleToDisplay = recentWordles[0];
   }
 
-  // Recent Wordle Answers: 直接使用最新的数据，按日期降序排列
+  // Recent Wordle Answers: 使用与WordlePuzzle相同的数据源
   console.log('=== DEBUG INFO ===');
   console.log('Current date:', formattedTodaysDate);
-  console.log('Recent wordles count:', recentWordles.length);
-  console.log('All dates:', recentWordles.map(w => w.date).join(', '));
-  console.log('First wordle date:', recentWordles[0]?.date);
+  console.log('wordleToDisplay date:', wordleToDisplay?.date);
+  console.log('Direct DB wordles count:', recentWordles.length);
+  console.log('Direct DB first 5 dates:', recentWordles.slice(0, 5).map(w => w.date).join(', '));
   console.log('==================');
 
-  const displayWordles = recentWordles; // 直接使用，因为getRecentWordles已经按日期降序排列
+  // 确保Recent Wordle Answers显示最新数据，如果有wordleToDisplay就把它放在第一位
+  const displayWordles = wordleToDisplay
+    ? [wordleToDisplay, ...recentWordles.filter(w => w.date !== wordleToDisplay.date)].slice(0, 15)
+    : recentWordles.slice(0, 15);
 
   return (
     <ClientBody>
