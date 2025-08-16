@@ -135,11 +135,16 @@ export default async function HomePage() {
               className="h-12 w-auto"
             />
             <h1 className="text-2xl sm:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
-              Wordle Answer Today
+              Wordle Answer Today - UPDATED {new Date().toISOString()}
             </h1>
           </div>
 
           {/* Today's Wordle Answer Card */}
+          {/* 🚀 CODE UPDATE TEST - If you see this, the code is working */}
+          <div style={{backgroundColor: 'red', color: 'white', padding: '10px', textAlign: 'center', marginBottom: '20px'}}>
+            🚀 CODE UPDATED - {new Date().toISOString()} - If you see this, our modifications are working!
+          </div>
+          
           <div className="mt-8 w-full max-w-lg md:max-w-4xl mx-auto">
             <Card className="mb-8 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200">
               <CardHeader className="text-center">
