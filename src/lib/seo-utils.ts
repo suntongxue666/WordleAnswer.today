@@ -92,7 +92,7 @@ export function generateSecondaryPageSEOMetadata(urlDate: string, wordleData: Wo
   const puzzleNumber = wordleData?.puzzle_number || format(pageDate, 'MMdd');
 
   // 动态标题 - 使用URL日期
-  const title = `Wordle ${pageDateFormatted} Answer & Hint - ${dayOfWeek} Solution | Puzzle #${puzzleNumber}`;
+  const title = `Wordle ${pageDateFormatted} Answer & Hint - Wordle Solver,Wordle Finder-#${puzzleNumber}`;
 
   // 描述 - 使用URL日期
   const description = `Get the Wordle answer for ${fullDate}! Find hints, clues and the solution for puzzle #${puzzleNumber}. Complete analysis with strategic tips and letter patterns for ${dayOfWeek}'s Wordle puzzle.`;

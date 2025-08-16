@@ -111,7 +111,7 @@ export default async function WordleDatePage({ params }: PageProps) {
           <div className="w-full max-w-4xl flex justify-start mb-6">
             <Link href="/" passHref>
               <Button variant="outline" className="flex items-center">
-                <Home className="mr-2 h-4 w-4" /> Back to Homepage
+                <Home className="mr-2 h-4 w-4" /> Home
               </Button>
             </Link>
           </div>
@@ -119,21 +119,21 @@ export default async function WordleDatePage({ params }: PageProps) {
           {/* Navigation Bar */}
           <div className="w-full max-w-4xl flex justify-between items-center mb-6">
             <Link href={`/wordle/${format(previousDate, 'yyyy-MM-dd')}`} passHref>
-              <Button variant="outline" className="flex items-center">
+              <Button variant="outline" className="flex items-center m-1">
                 <ChevronLeft className="mr-2 h-4 w-4" /> Wordle {formattedPreviousDate}
               </Button>
             </Link>
-            
+
             {!isNextDateFuture && (
               <Link href={`/wordle/${format(nextDate, 'yyyy-MM-dd')}`} passHref>
-                <Button variant="outline" className="flex items-center">
+                <Button variant="outline" className="flex items-center m-1">
                   Wordle {formattedNextDate} <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             )}
-            
+
             {isNextDateFuture && (
-              <Button variant="outline" disabled className="flex items-center opacity-50">
+              <Button variant="outline" disabled className="flex items-center opacity-50 m-1">
                 Wordle {formattedNextDate} <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             )}
