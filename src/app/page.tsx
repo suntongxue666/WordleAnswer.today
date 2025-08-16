@@ -41,6 +41,10 @@ import { format, subDays, parseISO } from 'date-fns';
 import { generateSEOMetadata } from '@/lib/seo-utils';
 import type { Metadata } from 'next';
 
+// Force dynamic rendering - 强制动态渲染，不使用缓存
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function generateMetadata(): Promise<Metadata> {
   // 使用服务器端安全的方式获取日期
   const now = Date.now();
