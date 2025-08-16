@@ -119,10 +119,27 @@ export default async function HomePage() {
   console.log('Direct DB first 5 dates:', recentWordles.slice(0, 5).map(w => w.date).join(' '));
   console.log('==================');
 
-  // 确保Recent Wordle Answers显示最新数据，如果有wordleToDisplay就把它放在第一位
-  const displayWordles = wordleToDisplay
-    ? [wordleToDisplay, ...recentWordles.filter(w => w.date !== wordleToDisplay.date)].slice(0, 15)
-    : recentWordles.slice(0, 15);
+  // 确保Recent Wordle Answers显示最新数据，按日期倒序排列
+  // 获取当前上海时间
+  const shanghaiNow = new Date(Date.now() + (8 * 60 * 60 * 1000)); // UTC+8
+  const shanghaiHour = shanghaiNow.getUTCHours();
+  const shanghaiDate = format(shanghaiNow, 'yyyy-MM-dd');
+  
+  // 如果当前上海时间是18:00之前，不显示今天之后的数据
+  const displayWordles = recentWordles
+    .filter(wordle => {
+      // 如果是未来日期且当前时间小于18:00，则不显示
+      if (wordle.date > shanghaiDate) {
+        return false;
+      }
+      // 如果是今天之后的日期且当前时间小于18:00，则不显示
+      if (wordle.date === shanghaiDate && shanghaiHour < 18) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // 确保按日期倒序排列
+    .slice(0, 15); // 只显示15个
 
   return (
     <ClientBody>
@@ -142,24 +159,16 @@ export default async function HomePage() {
           {/* Today's Wordle Answer Card */}
 
           <div className="mt-8 w-full max-w-lg md:max-w-4xl mx-auto">
-            <Card className="mb-8 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold text-green-700">
+            <div className="mb-8 bg-gradient-to-r from-green-50/80 to-blue-50/80 border-2 border-green-200 rounded-xl p-6">
+              <div className="text-center mb-4">
+                <h2 className="text-2xl font-bold text-green-700">
                   Today's Wordle Answer/Hint - Wordle {format(todaysDate, 'MMMM d')}
-                </CardTitle>
-                <CardDescription className="text-lg text-gray-600">
-                  Get today's Wordle answer and hints instantly
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-center">
-                <Link href={`/wordle/${formattedTodaysDate}`} passHref>
-                  <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg">
-                    <Lightbulb className="mr-2 h-5 w-5" />
-                    View Today's Answer & Hints
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+                </h2>
+                <p className="text-lg text-gray-600 mt-2">
+                  Wordle Puzzle #{wordleToDisplay?.puzzle_number || "Loading..."}
+                </p>
+              </div>
+            </div>
 
             {/* Always show the latest available Wordle data */}
             {wordleToDisplay ? (
@@ -177,14 +186,25 @@ export default async function HomePage() {
                   </div>
                 )}
 
-                <WordlePuzzle
-                  date={wordleToDisplay.date}
-                  puzzleNumber={wordleToDisplay.puzzle_number}
-                  answer={wordleToDisplay.answer}
-                  hints={wordleToDisplay.hints}
-                  difficulty={wordleToDisplay.difficulty}
-                  definition={wordleToDisplay.definition}
-                />
+                <div>
+                  <WordlePuzzle
+                    date={wordleToDisplay.date}
+                    puzzleNumber={wordleToDisplay.puzzle_number}
+                    answer={wordleToDisplay.answer}
+                    hints={wordleToDisplay.hints}
+                    difficulty={wordleToDisplay.difficulty}
+                    definition={wordleToDisplay.definition}
+                  />
+                  
+                  <div className="mt-6 flex justify-center">
+                    <Link href={`/wordle/${formattedTodaysDate}`} passHref>
+                      <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg">
+                        <Lightbulb className="mr-2 h-5 w-5" />
+                        View Today's Answer & Hints
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               </>
             ) : (
               <div className="mb-8 p-6 border-2 border-dashed border-gray-300 rounded-lg">
