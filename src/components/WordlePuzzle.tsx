@@ -76,7 +76,7 @@ export function WordlePuzzle({ date, puzzleNumber, answer, hints, difficulty, de
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
-        <CardTitle className="text-center">Today's Wordle Answer/Hint - Wordle {formattedMonthDay}</CardTitle>
+        <CardTitle className="text-center text-lg">Today's Wordle Answer/Hint - Wordle {formattedMonthDay}</CardTitle>
         <div className="text-center">
           <div className="text-lg font-bold text-gray-800 mb-1">
             Wordle Puzzle #{calculatedPuzzleNumber}
@@ -97,7 +97,7 @@ export function WordlePuzzle({ date, puzzleNumber, answer, hints, difficulty, de
 
         {hints && hints.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-lg font-semibold flex items-center">
+            <h3 className="text-lg font-semibold flex items-center" style={{fontSize: '18px'}}>
                 <Lightbulb className="mr-2 h-5 w-5 text-yellow-500" /> Helpful Hints:
             </h3>
             <ul className="list-decimal list-inside text-left">
@@ -111,7 +111,7 @@ export function WordlePuzzle({ date, puzzleNumber, answer, hints, difficulty, de
         )}
         <Separator />
         <div className="flex flex-col items-center space-y-4">
-          <h3 className="text-lg font-semibold">Today's Answer:</h3>
+          <h3 className="font-semibold" style={{fontSize: '18px'}}>Today's Answer:</h3>
           {showAnswer ? (
             <RenderRevealedWordleLetters word={answer} />
           ) : (

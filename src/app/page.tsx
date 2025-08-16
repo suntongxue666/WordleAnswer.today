@@ -119,17 +119,33 @@ export default async function HomePage() {
   const shanghaiHour = shanghaiNow.getUTCHours();
   const shanghaiDate = format(shanghaiNow, 'yyyy-MM-dd');
   
-  // 如果当前上海时间是18:00之前，不显示今天之后的数据
+  // 获取当前用户本地时间
+  const localNow = new Date();
+  const localDate = format(localNow, 'yyyy-MM-dd');
+  const localHour = localNow.getHours();
+  const localYesterday = format(subDays(localNow, 1), 'yyyy-MM-dd');
+  
+  // 数据显示规则：
+  // 1. 数据库在北京时间12:00抓取，抓取到立即可在详情页访问（方便搜索引擎收录）
+  // 2. 在首页显示时，要等到当地时间前一天的18:00:01才显示
   const displayWordles = recentWordles
     .filter(wordle => {
-      // 如果是未来日期且当前时间小于18:00，则不显示
+      // 如果是未来日期，则不显示
       if (wordle.date > shanghaiDate) {
         return false;
       }
-      // 如果是今天之后的日期且当前时间小于18:00，则不显示
-      if (wordle.date === shanghaiDate && shanghaiHour < 18) {
-        return false;
+      
+      // 如果是今天的数据，只有当本地时间是前一天18:00:01之后才显示
+      if (wordle.date === shanghaiDate) {
+        // 检查当前本地时间是否已经过了前一天的18:00:01
+        if (localDate === shanghaiDate && localHour < 18) {
+          return false; // 今天但还没到18:00，不显示
+        }
+        if (localDate === localYesterday && localHour < 18) {
+          return false; // 昨天但还没到18:00，不显示
+        }
       }
+      
       return true;
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // 确保按日期倒序排列
