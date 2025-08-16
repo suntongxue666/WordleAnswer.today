@@ -206,7 +206,22 @@ export default async function HomePage() {
               <div>📅 All dates: {displayWordles.map(w => w.date).join(', ')}</div>
               <div>🎯 Expected: Today's date ({formattedTodaysDate}) should be first if available</div>
               <div>🔧 Grid: 5 columns on large screens</div>
+              <div>🚀 File: src/app/page.tsx is being used (not public/index.html)</div>
             </div>
+            
+            {/* Client-side debug script */}
+            <script dangerouslySetInnerHTML={{
+              __html: `
+                console.log('=== CLIENT DEBUG INFO ===');
+                console.log('Current URL:', window.location.href);
+                console.log('Page loaded from: src/app/page.tsx');
+                console.log('Today date: ${formattedTodaysDate}');
+                console.log('Total wordles: ${displayWordles.length}');
+                console.log('All dates: ${displayWordles.map(w => w.date).join(', ')}');
+                console.log('First wordle date: ${displayWordles[0]?.date || 'none'}');
+                console.log('========================');
+              `
+            }} />
 
             {displayWordles.length > 0 ? (
               <>
