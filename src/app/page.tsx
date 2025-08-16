@@ -63,7 +63,7 @@ export default async function HomePage() {
   const formattedTodaysDate = format(todaysDate, 'yyyy-MM-dd');
   const formattedYesterdayDate = format(subDays(todaysDate, 1), 'yyyy-MM-dd');
 
-  const recentWordles = await getRecentWordles();
+  const recentWordles = await getRecentWordles(15); // 获取最近15天的数据
 
   // 获取最新可用的数据作为主要显示内容
   let wordleToDisplay: WordleAnswer | null = null;
@@ -83,23 +83,23 @@ export default async function HomePage() {
     wordleToDisplay = recentWordles[0];
   }
 
-  // Recent Wordle Answers: 确保今天的数据显示在第一位
-  const todaysWordle = await getTodaysWordle(formattedTodaysDate);
-  const displayWordles = todaysWordle
-    ? [todaysWordle, ...recentWordles.filter(w => w.date !== formattedTodaysDate)]
-    : recentWordles;
+  // Recent Wordle Answers: 直接使用最新的数据，按日期降序排列
+  console.log('Debug - recentWordles count:', recentWordles.length);
+  console.log('Debug - recentWordles first 5 dates:', recentWordles.slice(0, 5).map(w => w.date));
+
+  const displayWordles = recentWordles; // 直接使用，因为getRecentWordles已经按日期降序排列
 
   return (
     <ClientBody>
       <div className="flex flex-col items-center justify-center min-h-screen py-2">
         <main className="flex flex-col items-center justify-center w-full flex-1 px-4 sm:px-20 text-center">
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 mb-0 sm:mb-6">
             <img
               src="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//Wordle%20logo.png"
               alt="Wordle Logo"
               className="h-12 w-auto"
             />
-            <h1 className="text-4xl sm:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
+            <h1 className="text-2xl sm:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
               Wordle Answer Today
             </h1>
           </div>
@@ -164,12 +164,21 @@ export default async function HomePage() {
 
             <h2 className="text-2xl font-bold mb-4 text-left mt-8">Recent Wordle Answers</h2>
 
+            {/* Debug info - remove after testing */}
+            <div className="mb-4 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
+              <div>🔍 Debug Info (Today: {formattedTodaysDate}):</div>
+              <div>📊 Total wordles: {displayWordles.length} (最近15天)</div>
+              <div>📅 All dates: {displayWordles.map(w => w.date).join(', ')}</div>
+              <div>🎯 Expected: Today's date ({formattedTodaysDate}) should be first if available</div>
+              <div>🔧 Grid: 5 columns on large screens</div>
+            </div>
+
             {displayWordles.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {/* Show 15 recent Wordle cards (3 rows x 5 columns) */}
+                  {/* Show 15 recent Wordle cards (最近15天的数据) */}
                   {displayWordles
-                    .slice(0, 15) // 显示最近的15个
+                    .slice(0, 15) // 显示最近的15天
                     .map((wordle) => (
                       <RecentWordleCard
                         key={wordle.id}
