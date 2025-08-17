@@ -1,26 +1,26 @@
-// 根据Wordle答案自动生成hints
+// Wordlehints
 export function generateHints(answer: string): { type: string; value: string }[] {
   const word = answer.toUpperCase();
   const hints: { type: string; value: string }[] = [];
-  
+
   // 获取单词的基本信息
   const vowels = word.match(/[AEIOU]/g) || [];
   const consonants = word.match(/[BCDFGHJKLMNPQRSTVWXYZ]/g) || [];
   const uniqueLetters = [...new Set(word)];
   const repeatedLetters = word.split('').filter((letter, index) => word.indexOf(letter) !== index);
-  
+
   // 1. 基础结构提示
   hints.push({
     type: 'structure',
     value: `This word contains ${vowels.length} vowel${vowels.length !== 1 ? 's' : ''} and ${consonants.length} consonant${consonants.length !== 1 ? 's' : ''}.`
   });
-  
+
   // 2. 首末字母提示
   hints.push({
     type: 'position',
     value: `It starts with the letter '${word[0]}' and ends with '${word[word.length - 1]}'.`
   });
-  
+
   // 3. 特殊字母模式
   if (repeatedLetters.length > 0) {
     const repeatedSet = [...new Set(repeatedLetters)];
@@ -36,7 +36,7 @@ export function generateHints(answer: string): { type: string; value: string }[]
       });
     }
   }
-  
+
   // 4. 元音特殊情况
   if (vowels.length >= 2) {
     const uniqueVowels = [...new Set(vowels)];
@@ -52,11 +52,11 @@ export function generateHints(answer: string): { type: string; value: string }[]
       });
     }
   }
-  
+
   // 5. 字母表位置提示
-  const firstLetterPos = word.charCodeAt(0) - 64; // A=1, B=2, etc.
+  const firstLetterPos = word.charCodeAt(0) - 64; // A=1 B=2 etc.
   const lastLetterPos = word.charCodeAt(word.length - 1) - 64;
-  
+
   if (firstLetterPos <= 13) {
     hints.push({
       type: 'alphabet',
@@ -68,7 +68,7 @@ export function generateHints(answer: string): { type: string; value: string }[]
       value: `The first letter is in the second half of the alphabet.`
     });
   }
-  
+
   // 6. 常见字母组合
   const commonPairs = ['TH', 'ST', 'ND', 'ER', 'ON', 'RE', 'ED', 'IN', 'TO', 'IT'];
   const foundPairs = commonPairs.filter(pair => word.includes(pair));
@@ -78,7 +78,7 @@ export function generateHints(answer: string): { type: string; value: string }[]
       value: `The word contains the common letter combination '${foundPairs[0]}'.`
     });
   }
-  
+
   // 7. 生成一个更具体的描述性提示
   const categoryHints = generateCategoryHint(word);
   if (categoryHints) {
@@ -87,7 +87,7 @@ export function generateHints(answer: string): { type: string; value: string }[]
       value: categoryHints
     });
   }
-  
+
   return hints;
 }
 
@@ -107,7 +107,7 @@ function generateCategoryHint(word: string): string | null {
     weather: ['SUNNY', 'RAINY', 'WINDY', 'SNOWY', 'FOGGY', 'STORM', 'CLOUD'],
     technology: ['PHONE', 'ROBOT', 'CYBER', 'DIGITAL', 'SMART']
   };
-  
+
   for (const [category, words] of Object.entries(categories)) {
     if (words.includes(word)) {
       switch (category) {
@@ -138,13 +138,13 @@ function generateCategoryHint(word: string): string | null {
       }
     }
   }
-  
+
   // 如果没有找到特定类别，生成一个通用提示
   const wordLength = word.length;
   if (wordLength === 5) {
     return 'This is a common English word that you might use in everyday conversation.';
   }
-  
+
   return null;
 }
 
@@ -152,25 +152,25 @@ function generateCategoryHint(word: string): string | null {
 export function generateDifficulty(answer: string): string {
   const word = answer.toUpperCase();
   let difficultyScore = 0;
-  
+
   // 基础分数
   const vowels = word.match(/[AEIOU]/g) || [];
   const consonants = word.match(/[BCDFGHJKLMNPQRSTVWXYZ]/g) || [];
   const uniqueLetters = [...new Set(word)];
-  
+
   // 元音数量影响难度
   if (vowels.length <= 1) difficultyScore += 2; // 很少元音 = 更难
   if (vowels.length >= 4) difficultyScore += 1; // 很多元音 = 稍难
-  
+
   // 重复字母影响难度
   if (uniqueLetters.length < word.length) {
     difficultyScore += 1; // 有重复字母 = 稍难
   }
-  
+
   // 不常见字母影响难度
   const uncommonLetters = word.match(/[JQXZ]/g) || [];
   difficultyScore += uncommonLetters.length * 2;
-  
+
   // 常见单词降低难度
   const commonWords = [
     'ABOUT', 'AFTER', 'AGAIN', 'AGAINST', 'ALONG', 'AMONG', 'ANSWER', 'AROUND',
@@ -182,11 +182,11 @@ export function generateDifficulty(answer: string): string {
     'THEIR', 'THERE', 'THESE', 'THINK', 'THREE', 'UNDER', 'UNTIL', 'WATER',
     'WHERE', 'WHICH', 'WHILE', 'WORLD', 'WOULD', 'WRITE', 'YOUNG'
   ];
-  
+
   if (commonWords.includes(word)) {
     difficultyScore -= 1;
   }
-  
+
   // 根据分数确定难度
   if (difficultyScore <= 0) return 'Easy';
   if (difficultyScore <= 2) return 'Medium';

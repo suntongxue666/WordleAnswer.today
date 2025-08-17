@@ -22,11 +22,11 @@ async function apiScrape(dateStr: string): Promise<{ answer: string; source: str
   try {
     const url = `https://www.nytimes.com/svc/wordle/v2/${dateStr}.json`;
     const response = await axios.get(url, { timeout: 10000 });
-    
+
     if (response.status === 200 && response.data.solution) {
-      return { 
-        answer: response.data.solution.toUpperCase(), 
-        source: 'nyt_api' 
+      return {
+        answer: response.data.solution.toUpperCase(),
+        source: 'nyt_api'
       };
     }
   } catch (error) {
@@ -39,33 +39,33 @@ async function apiScrape(dateStr: string): Promise<{ answer: string; source: str
 async function efficientScrape(dateStr: string): Promise<{ answer: string; source: string } | null> {
   const puzzleNumber = calculatePuzzleNumber(dateStr);
   const targetDate = new Date(dateStr);
-  
+
   // 构建所有可能的URL
   // 1. NYT Review URL (前一天发布的) - 保持最高优先级，官方来源
   const reviewDate = new Date(targetDate);
   reviewDate.setDate(reviewDate.getDate() - 1);
   const nytReviewUrl = `https://www.nytimes.com/${reviewDate.getFullYear()}/${String(reviewDate.getMonth() + 1).padStart(2, '0')}/${String(reviewDate.getDate()).padStart(2, '0')}/crosswords/wordle-review-${puzzleNumber}.html`;
-  
+
   // 2. AppGamer URL - 新增高优先级来源
   const month = targetDate.toLocaleString('en-US', { month: 'long' }).toLowerCase();
   const day = targetDate.getDate();
   const year = targetDate.getFullYear();
   const appGamerUrl = `https://www.appgamer.com/wordle-${puzzleNumber}-hints-answer-${month}-${day}-${year}`;
-  
+
   // 3. TheGamer URL (原2) - 降低一个位置
   const theGamerUrl = `https://www.thegamer.com/wordle-nyt-answer-hints-solution-${month}-${day}-${year}/`;
-  
+
   // 3. Beebom URL (原7) - 提升优先级
   const beebomUrl = `https://beebom.com/todays-wordle-hints-answer-${month}-${day}-${year}/`;
-  
+
   // 4. TryHardGuides URL (原8) - 提升优先级
   const tryHardGuidesUrl = `https://tryhardguides.com/wordle-${puzzleNumber}-answer/`;
-  
+
   // 5. WordleGame URL (原5) - 保持原位置
   const wordleGameUrl = `https://wordlegame.org/wordle-answer-${targetDate.toISOString().split('T')[0]}`;
-  
+
   // 6. WordleHint URL (原2) - 降低优先级，因为更新较晚
-  const fallbackDate = targetDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: '2-digit', year: 'numeric' }).replace(/, /g, '-').replace(/ /g, '-');
+  const fallbackDate = targetDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: '2-digit', year: 'numeric' }).replace(/ /g, '-').replace(/,/g, '-');
   const wordleHintUrl = `https://www.wordlehint.top/todays-wordle-answer-${fallbackDate}`;
 
   // 随机化 User-Agent 以避免被检测为爬虫
@@ -76,9 +76,9 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
     'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
   ];
-  
+
   const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
-  
+
   const headers = {
     'User-Agent': randomUserAgent,
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -105,18 +105,18 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
   ];
 
   const responses = await Promise.allSettled(requests);
-  
+
   // 处理NYT review响应
   if (responses[0].status === 'fulfilled' && responses[0].value) {
     const $ = cheerio.load(responses[0].value.data);
     const bodyText = $.text();
-    
+
     // 查找特定的 JSON 数据
     const jsonMatch = bodyText.match(/ExperimentalBlock_Reveal.*?Today's word is ([A-Z]{5})/i);
     if (jsonMatch && jsonMatch[1]) {
       return { answer: jsonMatch[1].toUpperCase(), source: 'nyt_review_json' };
     }
-    
+
     // 常规模式匹配
     const patterns = [
       /Today'?s word is ([A-Z]{5})/i,
@@ -126,7 +126,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
       /word is ([A-Z]{5})/i,
       /answer.*?([A-Z]{5})/i
     ];
-    
+
     for (const pattern of patterns) {
       const match = bodyText.match(pattern);
       if (match && match[1]) {
@@ -134,13 +134,13 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
       }
     }
   }
-  
+
   // 处理AppGamer响应
   if (responses[1].status === 'fulfilled' && responses[1].value) {
     const $ = cheerio.load(responses[1].value.data);
-    
+
     // AppGamer通常在特定元素中包含答案
-    const answerElements = $('h2:contains("Answer"), .answer, strong');
+    const answerElements = $('h2:contains("Answer"), .answer strong');
     for (const element of answerElements.toArray()) {
       const text = $(element).text().trim();
       const match = text.match(/([A-Z]{5})/i);
@@ -148,7 +148,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
         return { answer: match[1].toUpperCase(), source: 'appgamer_element' };
       }
     }
-    
+
     // 尝试从页面内容中提取
     const bodyText = $.text();
     const patterns = [
@@ -156,7 +156,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
       /today['']?s\s+wordle\s+answer\s+is\s+["']?([A-Z]{5})["']?/i,
       /wordle\s+\d+\s+answer\s+is\s+["']?([A-Z]{5})["']?/i
     ];
-    
+
     for (const pattern of patterns) {
       const match = bodyText.match(pattern);
       if (match && match[1]) {
@@ -169,7 +169,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
   if (responses[6].status === 'fulfilled' && responses[6].value) {
     const $ = cheerio.load(responses[6].value.data);
     const scripts = $('script').toArray();
-    
+
     for (const script of scripts) {
       const scriptContent = $(script).html();
       if (scriptContent) {
@@ -186,7 +186,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
         }
       }
     }
-    
+
     // 尝试从页面内容中提取
     const bodyText = $.text();
     const answerMatch = bodyText.match(/answer(?:\s+is|:)?\s+["']?([A-Z]{5})["']?/i);
@@ -194,18 +194,18 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
       return { answer: answerMatch[1].toUpperCase(), source: 'wordlehint_text' };
     }
   }
-  
+
   // 处理TheGamer响应 (现在是第3位)
   if (responses[2].status === 'fulfilled' && responses[2].value) {
     const $ = cheerio.load(responses[2].value.data);
-    
+
     // TheGamer通常在标题或特定元素中包含答案
     const title = $('title').text();
     const titleMatch = title.match(/([A-Z]{5})/i);
     if (titleMatch && titleMatch[1]) {
       return { answer: titleMatch[1].toUpperCase(), source: 'thegamer_title' };
     }
-    
+
     // 尝试从特定元素中提取
     const answerElements = $('h2:contains("Answer"), h3:contains("Answer"), strong, b');
     for (const element of answerElements.toArray()) {
@@ -215,7 +215,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
         return { answer: match[1].toUpperCase(), source: 'thegamer_element' };
       }
     }
-    
+
     // 尝试从页面内容中提取
     const bodyText = $.text();
     const patterns = [
@@ -223,7 +223,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
       /today['']?s\s+wordle\s+answer\s+is\s+["']?([A-Z]{5})["']?/i,
       /wordle\s+answer\s+for.*?is\s+["']?([A-Z]{5})["']?/i
     ];
-    
+
     for (const pattern of patterns) {
       const match = bodyText.match(pattern);
       if (match && match[1]) {
@@ -231,11 +231,11 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
       }
     }
   }
-  
+
   // 处理Beebom响应 (现在是第4位)
   if (responses[3].status === 'fulfilled' && responses[3].value) {
     const $ = cheerio.load(responses[3].value.data);
-    
+
     // Beebom通常在特定元素中包含答案
     const answerElements = $('h2:contains("Answer"), h3:contains("Answer"), .answer, .wordle-answer');
     for (const element of answerElements.toArray()) {
@@ -245,7 +245,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
         return { answer: match[1].toUpperCase(), source: 'beebom_element' };
       }
     }
-    
+
     // 尝试从页面内容中提取
     const bodyText = $.text();
     const patterns = [
@@ -254,7 +254,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
       /wordle\s+answer\s+for.*?is\s+["']?([A-Z]{5})["']?/i,
       /solution\s+is\s+["']?([A-Z]{5})["']?/i
     ];
-    
+
     for (const pattern of patterns) {
       const match = bodyText.match(pattern);
       if (match && match[1]) {
@@ -262,11 +262,11 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
       }
     }
   }
-  
+
   // 处理TryHardGuides响应 (现在是第5位)
   if (responses[4].status === 'fulfilled' && responses[4].value) {
     const $ = cheerio.load(responses[4].value.data);
-    
+
     // TryHardGuides通常在特定元素中包含答案
     // 首先检查标题
     const title = $('title').text();
@@ -274,7 +274,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
     if (titleMatch && titleMatch[1] && titleMatch[1].length === 5) {
       return { answer: titleMatch[1].toUpperCase(), source: 'tryhardguides_title' };
     }
-    
+
     // 检查特定元素
     const answerElements = $('.answer, h2:contains("Answer"), .wordle-answer, strong');
     for (const element of answerElements.toArray()) {
@@ -284,7 +284,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
         return { answer: match[1].toUpperCase(), source: 'tryhardguides_element' };
       }
     }
-    
+
     // TryHardGuides通常会在页面中明确显示答案
     const paragraphs = $('p').toArray();
     for (const p of paragraphs) {
@@ -296,7 +296,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
         }
       }
     }
-    
+
     // 尝试从页面内容中提取
     const bodyText = $.text();
     const patterns = [
@@ -305,7 +305,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
       /wordle\s+\d+\s+answer\s+is\s+["']?([A-Z]{5})["']?/i,
       /solution(?:\s+is|:)?\s+["']?([A-Z]{5})["']?/i
     ];
-    
+
     for (const pattern of patterns) {
       const match = bodyText.match(pattern);
       if (match && match[1]) {
@@ -313,11 +313,11 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
       }
     }
   }
-  
+
   // 处理WordleGame响应 (现在是第6位)
   if (responses[5].status === 'fulfilled' && responses[5].value) {
     const $ = cheerio.load(responses[5].value.data);
-    
+
     // 尝试从特定元素中提取
     const answerElement = $('.wordle-answer, .answer-box, .solution');
     if (answerElement.length > 0) {
@@ -327,7 +327,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
         return { answer: answerMatch[1].toUpperCase(), source: 'wordlegame_element' };
       }
     }
-    
+
     // 尝试从页面内容中提取
     const bodyText = $.text();
     const patterns = [
@@ -335,7 +335,7 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
       /wordle\s+answer\s+is\s+["']?([A-Z]{5})["']?/i,
       /solution(?:\s+is|:)?\s+["']?([A-Z]{5})["']?/i
     ];
-    
+
     for (const pattern of patterns) {
       const match = bodyText.match(pattern);
       if (match && match[1]) {
@@ -343,9 +343,9 @@ async function efficientScrape(dateStr: string): Promise<{ answer: string; sourc
       }
     }
   }
-  
+
   // 所有数据源处理完毕
-  
+
   // 如果所有源都失败，返回null
   return null;
 }
@@ -357,25 +357,25 @@ export async function GET(request: Request) {
   // 处理TODAY参数
   if (targetDateParam === 'TODAY' || !targetDateParam) {
     const today = new Date();
-    targetDateParam = today.getFullYear() + '-' + 
-      String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+    targetDateParam = today.getFullYear() + '-' +
+      String(today.getMonth() + 1).padStart(2, '0') + '-' +
       String(today.getDate()).padStart(2, '0');
   }
 
   try {
     console.log(`Starting scrape for ${targetDateParam}`);
-    
+
     // 首先尝试新的API抓取方法（首选）
     let result = await apiScrape(targetDateParam);
-    
+
     // 如果API抓取失败，使用原有的网页抓取方法（备用）
     if (!result) {
       console.log('API抓取失败，尝试使用网页抓取方法...');
       result = await efficientScrape(targetDateParam);
     }
-    
+
     let wordleData: Partial<WordleAnswer>;
-    
+
     if (result) {
       console.log(`Found answer: ${result.answer} from ${result.source}`);
       wordleData = {
@@ -390,7 +390,7 @@ export async function GET(request: Request) {
       // 尝试使用高级应急方案
       console.log('Primary sources failed, trying advanced fallback methods...');
       const advancedAnswer = await getAdvancedFallbackAnswer(targetDateParam);
-      
+
       if (advancedAnswer) {
         console.log(`Found answer from advanced fallback: ${advancedAnswer}`);
         wordleData = {
@@ -428,12 +428,12 @@ export async function GET(request: Request) {
 
       if (error) {
         console.error('Database save error:', error);
-        return NextResponse.json({ 
+        return NextResponse.json({
           error: 'Failed to save to database',
-          scrapedData: wordleData 
+          scrapedData: wordleData
         }, { status: 500 });
       }
-      
+
       // 尝试通知 Google 索引新内容
       try {
         // 动态导入，避免在服务器启动时加载

@@ -71,18 +71,18 @@ export default async function WordleDatePage({ params }: PageProps) {
   const { date } = await params;
   const wordleData = await getTodaysWordle(date);
   const recentWordles = await getRecentWordles(10);
-  
+
   // Generate navigation dates
   const currentDate = parseISO(date);
   const previousDate = subDays(currentDate, 1);
   const nextDate = addDays(currentDate, 1);
   const today = new Date(Date.now());
-  
+
   // Format dates for navigation
   const formattedCurrentDate = format(currentDate, 'MMMM d');
   const formattedPreviousDate = format(previousDate, 'MMMM d');
   const formattedNextDate = format(nextDate, 'MMMM d');
-  
+
   // Check if next date is in the future
   const isNextDateFuture = nextDate > today;
 
@@ -115,7 +115,7 @@ export default async function WordleDatePage({ params }: PageProps) {
               </Button>
             </Link>
           </div>
-          
+
           {/* Navigation Bar */}
           <div className="w-full max-w-4xl flex justify-between items-center mb-6">
             <Link href={`/wordle/${format(previousDate, 'yyyy-MM-dd')}`} passHref>
@@ -138,11 +138,11 @@ export default async function WordleDatePage({ params }: PageProps) {
               </Button>
             )}
           </div>
-          
+
           <h1 className="text-4xl sm:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 mb-8">
             Wordle {formattedCurrentDate} Answer & Hint
           </h1>
-          
+
           <WordlePuzzle
             date={wordleData.date}
             puzzleNumber={wordleData.puzzle_number}
@@ -151,7 +151,7 @@ export default async function WordleDatePage({ params }: PageProps) {
             difficulty={wordleData.difficulty}
             definition={wordleData.definition}
           />
-          
+
           {/* Wordle Analysis Section */}
           <div className="mt-12 w-full max-w-4xl mx-auto">
             <WordleAnalysis
@@ -162,7 +162,7 @@ export default async function WordleDatePage({ params }: PageProps) {
               hints={wordleData.hints}
             />
           </div>
-          
+
           {/* Recent Wordle Answers Section */}
           <div className="mt-12 w-full max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold mb-4 text-left">Recent Wordle Answers</h2>
@@ -189,7 +189,7 @@ export default async function WordleDatePage({ params }: PageProps) {
               </Link>
             </div>
           </div>
-          
+
         </main>
       </div>
     </ClientBody>

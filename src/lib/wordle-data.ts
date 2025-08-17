@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'; // 导入 Supabase 客户端
+import { supabase } from '@/lib/supabase'; //  Supabase
 import { format } from 'date-fns'; // Add this import
 import { unstable_cache as cache } from 'next/cache'; // 导入 unstable_cache
 
@@ -35,13 +35,13 @@ export async function fetchWordleData(date: string, puzzleNumber: number): Promi
   try {
     const response = await fetch(`/api/wordle-scrape?date=${date}&puzzleNumber=${puzzleNumber}`);
     if (!response.ok) {
-      console.error(`Error fetching Wordle data for ${date}, puzzle ${puzzleNumber}: ${response.statusText}`);
+      console.error(`Error fetching Wordle data for ${date} puzzle ${puzzleNumber}: ${response.statusText}`);
       return null;
     }
     const data: WordleAnswer = await response.json();
     return data;
   } catch (error) {
-    console.error(`Failed to fetch Wordle data for ${date}, puzzle ${puzzleNumber}:`, error);
+    console.error(`Failed to fetch Wordle data for ${date} puzzle ${puzzleNumber}:`, error);
     return null;
   }
 }
@@ -72,7 +72,7 @@ export const getTodaysWordle = cache(
   }
 
   const result = data as WordleAnswer | null;
-  console.log(`[getTodaysWordle] Result for ${dateToFetch}: ${result ? `Found (Puzzle: ${result.puzzle_number}, Answer: ${result.answer})` : 'Not Found'}`);
+  console.log(`[getTodaysWordle] Result for ${dateToFetch}: ${result ? `Found (Puzzle: ${result.puzzle_number} Answer: ${result.answer})` : 'Not Found'}`);
   return result;
   },
   ['todays-wordle'], // Cache tag for today's wordle
@@ -111,7 +111,7 @@ export const getRecentWordleAnswers = cache(
     answer: item.answer,
     hints: Array.isArray(item.hints) ? item.hints : [],
     difficulty: item.difficulty || undefined,
-    definition: item.definition || undefined,
+    definition: item.definition || undefined
   }));
   },
   ['recent-wordles'], // Cache tag for recent wordles
@@ -183,11 +183,11 @@ export const calculatePuzzleNumber = (dateString: string): number => {
   try {
     const baseDate = new Date('2025-07-07'); // 基准日期：7月7日
     const basePuzzleNumber = 1479; // 基准期数
-    
+
     const targetDate = new Date(dateString);
     const diffTime = targetDate.getTime() - baseDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return basePuzzleNumber + diffDays;
   } catch (error) {
     console.error(`[calculatePuzzleNumber] Error calculating puzzle number for date: ${dateString}`, error);
@@ -200,9 +200,9 @@ export const calculatePuzzleNumber = (dateString: string): number => {
 };
 
 export const getWordleUrl = (date: string): string => {
-  // This URL will be for the detailed page, not for scraping.
+  // This URL will be for the detailed page not for scraping.
   // The puzzle number might be needed here too if the detail page requires it in its path.
-  // For now, it assumes /wordle/[date] is sufficient.
+  // For now it assumes /wordle/[date] is sufficient.
   return `/wordle/${date}`;
 };
 
@@ -245,7 +245,7 @@ export const getRecentWordles = cache(
     return [];
   }
   // Log fetched dates to verify
-  console.log(`[getRecentWordles] Fetched ${data.length} recent Wordles. Dates: ${data.map(d => d.date).join(', ')}`);
+  console.log(`[getRecentWordles] Fetched ${data.length} recent Wordles. Dates: ${data.map(d => d.date).join(' ')}`);
   return data as WordleAnswer[];
   },
   ['all-recent-wordles'], // Cache tag for recent wordles

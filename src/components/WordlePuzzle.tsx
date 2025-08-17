@@ -53,8 +53,8 @@ export function WordlePuzzle({ date, puzzleNumber, answer, hints, difficulty, de
   const parsedDate = parseISO(date);
   const formattedDateForDisplay = format(parsedDate, 'PPP');
   const formattedDayOfWeek = format(parsedDate, 'EEEE');
-  const formattedMonthDay = format(parsedDate, 'MMMM d'); // e.g., "July 8"
-  
+  const formattedMonthDay = format(parsedDate, 'MMMM d'); // e.g. "July 8"
+
   // 计算期数，优先使用传入的puzzleNumber，否则自动计算
   const calculatedPuzzleNumber = puzzleNumber || calculatePuzzleNumber(date);
 
@@ -82,7 +82,7 @@ export function WordlePuzzle({ date, puzzleNumber, answer, hints, difficulty, de
             Wordle Puzzle #{calculatedPuzzleNumber}
           </div>
           <CardDescription className="text-center">
-            {formattedDayOfWeek}, {formattedDateForDisplay}
+            {formattedDayOfWeek} {formattedDateForDisplay}
           </CardDescription>
         </div>
       </CardHeader>
@@ -129,4 +129,4 @@ export function WordlePuzzle({ date, puzzleNumber, answer, hints, difficulty, de
       </CardContent>
     </Card>
   );
-} 
+}

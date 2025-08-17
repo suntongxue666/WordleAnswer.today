@@ -39,7 +39,7 @@ export async function GET(request: Request) {
       return NextResponse.json(data);
     }
   } catch (error) {
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Database query failed',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });

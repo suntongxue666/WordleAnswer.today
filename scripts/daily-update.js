@@ -3,20 +3,20 @@ const https = require('https');
 function getWordleSolution(dateStr) {
     return new Promise((resolve, reject) => {
         const url = `https://www.nytimes.com/svc/wordle/v2/${dateStr}.json`;
-        
+
         https.get(url, (res) => {
             let data = '';
-            
+
             res.on('data', (chunk) => {
                 data += chunk;
             });
-            
+
             res.on('end', () => {
                 try {
                     if (res.statusCode === 200) {
                         const jsonData = JSON.parse(data);
                         const solution = jsonData.solution;
-                        
+
                         if (solution) {
                             console.log(`${dateStr} 的Wordle单词是：${solution.toUpperCase()}`);
                             resolve(solution.toUpperCase());
@@ -53,9 +53,9 @@ async function saveToSupabase(date, solution) {
     try {
         const supabaseUrl = 'https://yubvrpzgvixulyylqfkp.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1YnZycHpndml4dWx5eWxxZmtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3NjQ5ODAsImV4cCI6MjA2NzM0MDk4MH0.yLB0DgETfVOiZLyZT3W_mVliR6lMOhpzXPzuX5ByKmM';
-        
+
         const puzzleNumber = calculatePuzzleNumber(date);
-        
+
         const postData = JSON.stringify({
             date: date,
             puzzle_number: puzzleNumber,
@@ -120,14 +120,14 @@ async function updateNextDayWordle() {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const tomorrowStr = tomorrow.toISOString().split('T')[0];
-        
+
         console.log(`开始更新 ${tomorrowStr} 的Wordle答案...`);
-        
+
         const solution = await getWordleSolution(tomorrowStr);
-        
+
         if (solution) {
             console.log(`✅ 成功获取到 ${tomorrowStr} 的Wordle答案：${solution}`);
-            
+
             console.log('正在保存到Supabase数据库...');
             try {
                 const result = await saveToSupabase(tomorrowStr, solution);

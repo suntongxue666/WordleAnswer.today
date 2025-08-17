@@ -28,12 +28,12 @@ export function WordleAnalysis({ date, answer, puzzleNumber, difficulty, hints }
     const commonLetterCount = answer.split('').filter(letter => commonLetters.includes(letter.toUpperCase())).length;
 
     return {
-      letterFrequency: `This word contains ${vowelCount} vowel${vowelCount !== 1 ? 's' : ''} and ${consonantCount} consonant${consonantCount !== 1 ? 's' : ''}. ${hasDoubleLetters ? 'It has repeated letters, which can make it trickier to solve.' : 'All letters are unique, making it easier to eliminate possibilities.'}`,
-      commonLetters: `${commonLetterCount} out of 5 letters are among the most common in English (E, A, R, I, O, T, N, S). This ${commonLetterCount >= 3 ? 'high frequency makes it a relatively approachable word' : 'lower frequency might make it more challenging'}.`,
-      strategy: answer.charAt(0).toUpperCase() === 'S' ? 'Starting with S makes this word accessible with common opening words like STARE or SLATE.' : 
+      letterFrequency: `This word contains ${vowelCount} vowel${vowelCount !== 1 ? 's' : ''} and ${consonantCount} consonant${consonantCount !== 1 ? 's' : ''}. ${hasDoubleLetters ? 'It has repeated letters which can make it trickier to solve.' : 'All letters are unique making it easier to eliminate possibilities.'}`,
+      commonLetters: `${commonLetterCount} out of 5 letters are among the most common in English (E A R I O T N S). This ${commonLetterCount >= 3 ? 'high frequency makes it a relatively approachable word' : 'lower frequency might make it more challenging'}.`,
+      strategy: answer.charAt(0).toUpperCase() === 'S' ? 'Starting with S makes this word accessible with common opening words like STARE or SLATE.' :
                 answer.charAt(0).toUpperCase() === 'A' ? 'The A at the beginning is helpful as it\'s a common vowel placement.' :
                 'The starting letter might require some strategic thinking in your opening moves.',
-      difficulty: difficulty === 'Easy' ? 'This puzzle is rated as Easy, making it perfect for beginners or a quick solve.' :
+      difficulty: difficulty === 'Easy' ? 'This puzzle is rated as Easy making it perfect for beginners or a quick solve.' :
                  difficulty === 'Medium' ? 'This Medium-difficulty puzzle offers a balanced challenge for most players.' :
                  'This Hard puzzle will test your vocabulary and strategic thinking skills.'
     };

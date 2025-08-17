@@ -1,0 +1,9 @@
+{
+  "supabase": {
+    "url": "https://yubvrpzgvixulyylqfkp.supabase.co",
+    "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1YnZycHpndml4dWx5eWxxZmtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3NjQ5ODAsImV4cCI6MjA2NzM0MDk4MH0.yLB0DgETfVOiZLyZT3W_mVliR6lMOhpzXPzuX5ByKmM"
+  },
+  "baseDate": "2025-07-07",
+  "basePuzzleNumber": 1479,
+  "logFile": "/Users/sun/Desktop/WordleAnswer.today/logs/midnight-refresh.log"
+}

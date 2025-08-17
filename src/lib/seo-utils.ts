@@ -7,7 +7,7 @@ export function generateSEOMetadata(wordleData: WordleAnswer | null) {
   const dataDate = wordleData?.date ? parseISO(wordleData.date) : new Date(Date.now());
   const dataDateFormatted = format(dataDate, 'MMMM d'); // "July 10"
   const dayOfWeek = format(dataDate, 'EEEE'); // "Thursday"
-  const fullDate = format(dataDate, 'MMMM d, yyyy'); // "July 10, 2025"
+  const fullDate = format(dataDate, 'MMMM d yyyy'); // "July 10 2025"
 
   const answer = wordleData?.answer || 'Daily Wordle';
   const puzzleNumber = wordleData?.puzzle_number || format(dataDate, 'MMdd');
@@ -26,7 +26,7 @@ export function generateSEOMetadata(wordleData: WordleAnswer | null) {
   const title = `Wordle ${dataDateFormatted} Answer & Hint - Puzzle #${puzzleNumber} Solver & Finder`;
 
   // 描述 - 包含答案预告和关键词
-  const description = `Get today's Wordle answer for ${fullDate}! Find Wordle hints, clues and the solution for puzzle #${puzzleNumber}. Daily Wordle help with strategic tips and letter analysis. Updated every day with the latest ${dayOfWeek} Wordle answer.`;
+  const description = `Get today's Wordle answer for ${fullDate}! Find Wordle hints clues and the solution for puzzle #${puzzleNumber}. Daily Wordle help with strategic tips and letter analysis. Updated every day with the latest ${dayOfWeek} Wordle answer.`;
 
   // 关键词 - 基于搜索趋势优化
   const keywords = [
@@ -45,7 +45,7 @@ export function generateSEOMetadata(wordleData: WordleAnswer | null) {
     'wordle solver',
     'wordle answers',
     'wordle hints'
-  ].join(', ');
+  ].join(' ');
 
   return {
     title,
@@ -53,7 +53,7 @@ export function generateSEOMetadata(wordleData: WordleAnswer | null) {
     keywords,
     openGraph: {
       title: `${dayOfWeek} Wordle Answer - ${dataDateFormatted} Hint & Solution`,
-      description: `Discover today's Wordle answer for ${fullDate}. Get hints, tips and the solution for Wordle puzzle #${puzzleNumber}. Updated daily!`,
+      description: `Discover today's Wordle answer for ${fullDate}. Get hints tips and the solution for Wordle puzzle #${puzzleNumber}. Updated daily!`,
       type: 'website',
       locale: 'en_US',
       siteName: 'Wordle Answer Today'
@@ -61,7 +61,7 @@ export function generateSEOMetadata(wordleData: WordleAnswer | null) {
     twitter: {
       card: 'summary_large_image',
       title: `Wordle Answer ${dataDateFormatted} - Puzzle #${puzzleNumber} Solution`,
-      description: `Today's Wordle answer and hints for ${dayOfWeek}, ${fullDate}. Get the solution and strategic tips!`
+      description: `Today's Wordle answer and hints for ${dayOfWeek} ${fullDate}. Get the solution and strategic tips!`
     },
     alternates: {
       canonical: 'https://wordleanswer.today/'
@@ -74,8 +74,8 @@ export function generateSEOMetadata(wordleData: WordleAnswer | null) {
         follow: true,
         'max-video-preview': -1,
         'max-image-preview': 'large' as const,
-        'max-snippet': -1,
-      },
+        'max-snippet': -1
+      }
     }
   };
 }
@@ -86,16 +86,16 @@ export function generateSecondaryPageSEOMetadata(urlDate: string, wordleData: Wo
   const pageDate = parseISO(urlDate);
   const pageDateFormatted = format(pageDate, 'MMMM d'); // "July 8"
   const dayOfWeek = format(pageDate, 'EEEE'); // "Monday"
-  const fullDate = format(pageDate, 'MMMM d, yyyy'); // "July 8, 2025"
+  const fullDate = format(pageDate, 'MMMM d yyyy'); // "July 8 2025"
 
   const answer = wordleData?.answer || 'Daily Wordle';
   const puzzleNumber = wordleData?.puzzle_number || format(pageDate, 'MMdd');
 
   // 动态标题 - 使用URL日期
-  const title = `Wordle ${pageDateFormatted} Answer & Hint - Wordle Solver,Wordle Finder-#${puzzleNumber}`;
+  const title = `Wordle ${pageDateFormatted} Answer & Hint - Wordle SolverWordle Finder-#${puzzleNumber}`;
 
   // 描述 - 使用URL日期
-  const description = `Get the Wordle answer for ${fullDate}! Find hints, clues and the solution for puzzle #${puzzleNumber}. Complete analysis with strategic tips and letter patterns for ${dayOfWeek}'s Wordle puzzle.`;
+  const description = `Get the Wordle answer for ${fullDate}! Find hints clues and the solution for puzzle #${puzzleNumber}. Complete analysis with strategic tips and letter patterns for ${dayOfWeek}'s Wordle puzzle.`;
 
   // 关键词 - 基于URL日期
   const keywords = [
@@ -112,7 +112,7 @@ export function generateSecondaryPageSEOMetadata(urlDate: string, wordleData: Wo
     'wordle solver',
     'wordle answers',
     'wordle hints'
-  ].join(', ');
+  ].join(' ');
 
   return {
     title,
@@ -120,7 +120,7 @@ export function generateSecondaryPageSEOMetadata(urlDate: string, wordleData: Wo
     keywords,
     openGraph: {
       title: `${dayOfWeek} Wordle ${pageDateFormatted} - Answer & Hint Solution`,
-      description: `Discover the Wordle answer for ${fullDate}. Get hints, tips and the solution for puzzle #${puzzleNumber}. Complete analysis and strategic insights!`,
+      description: `Discover the Wordle answer for ${fullDate}. Get hints tips and the solution for puzzle #${puzzleNumber}. Complete analysis and strategic insights!`,
       type: 'website',
       locale: 'en_US',
       siteName: 'Wordle Answer Today'
@@ -141,8 +141,8 @@ export function generateSecondaryPageSEOMetadata(urlDate: string, wordleData: Wo
         follow: true,
         'max-video-preview': -1,
         'max-image-preview': 'large' as const,
-        'max-snippet': -1,
-      },
+        'max-snippet': -1
+      }
     }
   };
 }

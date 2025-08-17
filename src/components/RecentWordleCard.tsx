@@ -31,9 +31,9 @@ const RenderWordleLetters = ({ word }: { word: string }) => {
 
 export function RecentWordleCard({ id, date, puzzleNumber, answer, difficulty }: RecentWordleCardProps) {
   const parsedDate = parseISO(date);
-  // 修改日期格式为 "Wordle July 8, 2025"
-  const formattedDate = `Wordle ${format(parsedDate, 'MMMM d, yyyy')}`;
-  
+  // 修改日期格式为 "Wordle July 8 2025"
+  const formattedDate = `Wordle ${format(parsedDate, 'MMMM d yyyy')}`;
+
   // 计算期数，优先使用传入的puzzleNumber，否则自动计算
   const calculatedPuzzleNumber = puzzleNumber || calculatePuzzleNumber(date);
 
@@ -83,4 +83,4 @@ export function RecentWordleCard({ id, date, puzzleNumber, answer, difficulty }:
       </CardContent>
     </Card>
   );
-} 
+}

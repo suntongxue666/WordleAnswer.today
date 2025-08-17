@@ -37,7 +37,7 @@ import { WordlePuzzle } from '@/components/WordlePuzzle';
 import { RecentWordleCard } from '@/components/RecentWordleCard';
 import { WordleAnalysis } from '@/components/WordleAnalysis';
 import { HowToPlayWordle } from '@/components/HowToPlayWordle';
-import { format, subDays, parseISO } from 'date-fns';
+import { format, subDays, addDays, parseISO } from 'date-fns';
 import { generateSEOMetadata } from '@/lib/seo-utils';
 import type { Metadata } from 'next';
 
@@ -67,6 +67,7 @@ export default async function HomePage() {
   const todaysDate = new Date(now);
   const formattedTodaysDate = format(todaysDate, 'yyyy-MM-dd');
   const formattedYesterdayDate = format(subDays(todaysDate, 1), 'yyyy-MM-dd');
+  const formattedTomorrowDate = format(addDays(todaysDate, 1), 'yyyy-MM-dd');
 
   // 直接从数据库获取最新数据，绕过缓存
   const getLatestWordles = async () => {
@@ -101,13 +102,13 @@ export default async function HomePage() {
 
   // 如果没有今天的，尝试昨天的
   if (!wordleToDisplay) {
-    console.log(`Today's Wordle (${formattedTodaysDate}) not found, trying yesterday's (${formattedYesterdayDate}).`);
+    console.log(`Today's Wordle (${formattedTodaysDate}) not found trying yesterday's (${formattedYesterdayDate}).`);
     wordleToDisplay = await getTodaysWordle(formattedYesterdayDate);
   }
 
   // 如果今天和昨天都没有，使用最新的历史数据
   if (!wordleToDisplay && recentWordles.length > 0) {
-    console.log(`No recent data found, using latest from history.`);
+    console.log(`No recent data found using latest from history.`);
     wordleToDisplay = recentWordles[0];
   }
 
@@ -118,34 +119,40 @@ export default async function HomePage() {
   const shanghaiNow = new Date(Date.now() + (8 * 60 * 60 * 1000)); // UTC+8
   const shanghaiHour = shanghaiNow.getUTCHours();
   const shanghaiDate = format(shanghaiNow, 'yyyy-MM-dd');
-  
+
   // 获取当前用户本地时间
   const localNow = new Date();
   const localDate = format(localNow, 'yyyy-MM-dd');
   const localHour = localNow.getHours();
   const localYesterday = format(subDays(localNow, 1), 'yyyy-MM-dd');
-  
+  const localTomorrow = format(addDays(localNow, 1), 'yyyy-MM-dd');
+
   // 数据显示规则：
   // 1. 数据库在北京时间12:00抓取，抓取到立即可在详情页访问（方便搜索引擎收录）
-  // 2. 在首页显示时，要等到当地时间前一天的18:00:01才显示
+  // 2. 在首页显示时，要等到前一天的18:00:01才显示
   const displayWordles = recentWordles
     .filter(wordle => {
       // 如果是未来日期，则不显示
       if (wordle.date > shanghaiDate) {
         return false;
       }
-      
-      // 如果是今天的数据，只有当本地时间是前一天18:00:01之后才显示
-      if (wordle.date === shanghaiDate) {
-        // 检查当前本地时间是否已经过了前一天的18:00:01
-        if (localDate === shanghaiDate && localHour < 18) {
-          return false; // 今天但还没到18:00，不显示
-        }
-        if (localDate === localYesterday && localHour < 18) {
-          return false; // 昨天但还没到18:00，不显示
+
+      // 如果是明天的数据，只有当本地时间是今天18:00:01之后才显示
+      if (wordle.date === formattedTomorrowDate) {
+        // 检查当前本地时间是否已经过了今天的18:00
+        if (localHour < 18) {
+          return false; // 还没到今天18:00，不显示明天的数据
         }
       }
-      
+
+      // 如果是今天的数据，只有当本地时间是昨天18:00:01之后才显示
+      if (wordle.date === formattedTodaysDate) {
+        // 如果现在是昨天且时间小于18:00，不显示今天的数据
+        if (localDate === formattedYesterdayDate && localHour < 18) {
+          return false;
+        }
+      }
+
       return true;
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // 确保按日期倒序排列
@@ -178,16 +185,16 @@ export default async function HomePage() {
               const localDate = format(localNow, 'yyyy-MM-dd');
               const localHour = localNow.getHours();
               const localYesterday = format(subDays(localNow, 1), 'yyyy-MM-dd');
-              
+
               // 按照规则筛选要显示的数据
               // 如果当前时间是前一天18:00:01之后，显示最新的数据
               // 否则显示前一天的数据
               let wordleToShow = null;
-              
+
               if (displayWordles.length > 0) {
                 wordleToShow = displayWordles[0]; // 默认显示最新的
               }
-              
+
               return wordleToShow ? (
                 <>
                   {/* Date indicator if not today's data */}
@@ -212,7 +219,7 @@ export default async function HomePage() {
                       difficulty={wordleToShow.difficulty}
                       definition={wordleToShow.definition}
                     />
-                  
+
                   <div className="mt-6 flex justify-center">
                     <Link href={`/wordle/${formattedTodaysDate}`} passHref>
                       <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg">
