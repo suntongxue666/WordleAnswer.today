@@ -26,16 +26,19 @@ export async function GET() {
     <priority>0.8</priority>
   </url>`);
   
-  // Add all Wordle pages from database
-  allWordles.forEach(wordle => {
-    // Only include the date-based URL format that actually exists
-    urls.push(`  <url>
+  // Add all Wordle pages from database - sort by date in descending order (newest first)
+  allWordles
+    .slice() // 创建副本以避免修改原数组
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // 按日期倒序排列
+    .forEach(wordle => {
+      // Only include the date-based URL format that actually exists
+      urls.push(`  <url>
     <loc>${baseUrl}/wordle/${wordle.date}</loc>
     <lastmod>${wordle.date}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>`);
-  });
+    });
   
   // Add static pages
   const staticPages = [
