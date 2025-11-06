@@ -10,6 +10,7 @@ import {
   getDifficultyColor,
   type WordleAnswer
 } from '@/lib/wordle-data';
+import { PETOGETHER_AD } from '@/lib/ad-config';
 import {
   Eye,
   EyeOff,
@@ -151,6 +152,17 @@ export default async function WordleDatePage({ params }: PageProps) {
             difficulty={wordleData.difficulty}
             definition={wordleData.definition}
           />
+
+          {/* 广告位2: Wordle答案详情页 */}
+          <div className="mt-8 flex justify-center">
+            <a href={PETOGETHER_AD.linkUrl} target="_blank" rel="noopener noreferrer">
+              <img 
+                src={PETOGETHER_AD.imageUrl} 
+                alt={PETOGETHER_AD.altText}
+                className="w-full max-w-4xl mx-auto border rounded-lg"
+              />
+            </a>
+          </div>
 
           {/* Wordle Analysis Section */}
           <div className="mt-12 w-full max-w-4xl mx-auto">

@@ -32,6 +32,7 @@ import {
   type WordleAnswer
 } from '@/lib/wordle-data';
 import { supabase } from '@/lib/supabase';
+import { PETOGETHER_AD } from '@/lib/ad-config';
 import ClientBody from '@/app/ClientBody';
 import { WordlePuzzle } from '@/components/WordlePuzzle';
 import { RecentWordleCard } from '@/components/RecentWordleCard';
@@ -227,6 +228,17 @@ export default async function HomePage() {
                         View Today's Answer & Hints
                       </Button>
                     </Link>
+                  </div>
+
+                  {/* 广告位1: 首页按钮下方 */}
+                  <div className="mt-6 flex justify-center">
+                    <a href={PETOGETHER_AD.linkUrl} target="_blank" rel="noopener noreferrer">
+                      <img 
+                        src={PETOGETHER_AD.imageUrl} 
+                        alt={PETOGETHER_AD.altText}
+                        className="w-full max-w-lg md:max-w-4xl mx-auto border rounded-lg"
+                      />
+                    </a>
                   </div>
                 </div>
               </>
